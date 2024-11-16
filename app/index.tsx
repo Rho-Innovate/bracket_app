@@ -25,10 +25,8 @@ export default function Page() {
   return (
     <View style={styles.container}>
       <View style={styles.main}>
-        <Text style={styles.subtitle}>B R A C K E T</Text>
-      </View>
-      <View style={styles.authContainer}>
-          <Auth />
+        <Text style={styles.title}>B R A C K E T</Text>
+        <Auth />
       </View>
     </View>
   );
@@ -48,6 +46,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 64,
     fontWeight: 'bold',
+    color: 'white',
   },
   subtitle: {
     fontSize: 36,
