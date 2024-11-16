@@ -42,7 +42,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     maxWidth: 960,
-    marginHorizontal: 'auto',
   },
   title: {
     fontSize: 64,
@@ -53,4 +52,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: '#38434D',
   },
+  authContainer: {
+    width: '100%',
+  }
 });
