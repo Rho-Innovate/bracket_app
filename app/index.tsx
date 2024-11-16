@@ -25,9 +25,10 @@ export default function Page() {
   return (
     <View style={styles.container}>
       <View style={styles.main}>
-        <Text style={styles.title}>Hello World</Text>
-        <Text style={styles.subtitle}>This is the first page of your app.</Text>
-        <Auth />
+        <Text style={styles.subtitle}>B R A C K E T</Text>
+      </View>
+      <View style={styles.authContainer}>
+          <Auth />
       </View>
     </View>
   );
@@ -43,7 +44,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     maxWidth: 960,
-    marginHorizontal: 'auto',
   },
   title: {
     fontSize: 64,
@@ -53,4 +53,7 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: '#38434D',
   },
+  authContainer: {
+    width: '100%',
+  }
 });
