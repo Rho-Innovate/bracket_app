@@ -7,8 +7,9 @@ import Avatar from './Avatar'; // Import the new component
 
 export default function Account({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [username, setUsername] = useState('')
-  const [website, setWebsite] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function Account({ session }: { session: Session }) {
 
       const { data, error, status } = await supabase
         .from('profiles')
-        .select(`username, website, avatar_url`)
+        .select(`first_name, last_name, username, avatar_url`)
         .eq('id', session?.user.id)
         .single()
       if (error && status !== 406) {
@@ -30,8 +31,10 @@ export default function Account({ session }: { session: Session }) {
       }
 
       if (data) {
+        setFirstName(data.first_name)
+        setLastName(data.last_name)
         setUsername(data.username)
-        setWebsite(data.website)
+     
         setAvatarUrl(data.avatar_url)
       }
     } catch (error) {
@@ -44,12 +47,16 @@ export default function Account({ session }: { session: Session }) {
   }
 
   async function updateProfile({
+    firstName,
+    lastName,
     username,
-    website,
+   
     avatar_url,
   }: {
+    firstName: string,
+    lastName: string,
     username: string
-    website: string
+    
     avatar_url: string
   }) {
     try {
@@ -58,8 +65,9 @@ export default function Account({ session }: { session: Session }) {
 
       const updates = {
         id: session?.user.id,
+        firstName,
+        lastName,
         username,
-        website,
         avatar_url,
         updated_at: new Date(),
       }
@@ -87,25 +95,29 @@ export default function Account({ session }: { session: Session }) {
           url={avatarUrl}
           onUpload={(url: string) => {
             setAvatarUrl(url)
-            updateProfile({ username, website, avatar_url: url })
+            updateProfile({ firstName, lastName, username, avatar_url: url })
           }}
         />
       </View>
-
+    
+      <View style={styles.verticallySpaced}>
+        <Input label="First Name" value={firstName || ''} onChangeText={(text) => setFirstName(text)} />
+      </View>
+      <View style={styles.verticallySpaced}>
+        <Input label="Last Name" value={lastName || ''} onChangeText={(text) => setLastName(text)} />
+      </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Input label="Email" value={session?.user?.email} disabled />
       </View>
       <View style={styles.verticallySpaced}>
         <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
       </View>
-      <View style={styles.verticallySpaced}>
-        <Input label="Website" value={website || ''} onChangeText={(text) => setWebsite(text)} />
-      </View>
+
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={loading ? 'Loading ...' : 'Update'}
-          onPress={() => updateProfile({ username, website, avatar_url: avatarUrl })}
+          onPress={() => updateProfile({ firstName, lastName, username, avatar_url: avatarUrl })}
           disabled={loading}
         />
       </View>

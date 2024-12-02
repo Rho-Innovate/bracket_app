@@ -31,20 +31,26 @@ export default function Auth() {
     setLoading(false);
   }
 
-  async function signUpWithEmail() {
+  async function signUpWithEmail(): Promise<void> {
     setLoading(true);
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
+    try {
+      const { data: { session }, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+      });
 
-    if (error) Alert.alert(error.message);
-    if (!session)
-      Alert.alert("Please check your inbox for email verification!");
-    setLoading(false);
+      if (error) {
+        Alert.alert("Sign Up Error", error.message);
+      } else if (!session) {
+        Alert.alert("Verification Required", "Please check your inbox for email !");
+      }
+    } catch (err) {
+      console.error("Sign Up Error:", err);
+    } finally {
+      setLoading(false);
+    }
+
+    //setLoading(false);
   }
 
   return (
