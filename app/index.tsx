@@ -2,8 +2,12 @@ import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Account from '../components/Account';
+import Home from '../components/Navigation';
 import Auth from '../components/Auth';
 import { supabase } from '../lib/supabase';
+import { NavigationContainer } from '@react-navigation/native';
+import Navigation from '../components/Login Nav';
+import { NavigationIndependentTree } from '@react-navigation/native';
 
 export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
@@ -19,17 +23,25 @@ export default function Page() {
   }, []);
 
   if (session && session.user) {
-    return <Account key={session.user.id} session={session} />;
+    return (
+      <NavigationIndependentTree>
+        {/* <NavigationContainer> */}
+          <Navigation session={session} />
+        {/* </NavigationContainer> */}
+      </NavigationIndependentTree>
+    );
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.main}>
-        <Text style={styles.title}>B R A C K E T</Text>
+        <Text style={styles.title}>BRACKET</Text>
         <Auth />
       </View>
     </View>
   );
+
+  // return <Home />;
 }
 
 const styles = StyleSheet.create({
