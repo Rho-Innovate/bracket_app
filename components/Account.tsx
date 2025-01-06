@@ -125,7 +125,6 @@ export default function Account({ route }: AccountScreenProps) {
         <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
       </View>
 
-
       {/* <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={loading ? 'Loading ...' : 'Update'}
