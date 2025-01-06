@@ -3,14 +3,26 @@ import { Session } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
 import { supabase } from '../lib/supabase'
-import Avatar from './Avatar'; // Import the new component
+import Avatar from './Avatar';
+import { useNavigation } from '@react-navigation/native';
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from './Login Nav';
+import { NavigationProp } from './Login Nav';
 
-export default function Account({ session }: { session: Session }) {
+type AccountScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'Account'>;
+  route: RouteProp<RootStackParamList, 'Account'>;
+};
+
+export default function Account({ route }: AccountScreenProps) {
+  const { session } = route.params;
   const [loading, setLoading] = useState(true)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [username, setUsername] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
     if (session) getProfile()
@@ -113,13 +125,16 @@ export default function Account({ session }: { session: Session }) {
         <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
       </View>
 
-
-      <View style={[styles.verticallySpaced, styles.mt20]}>
+      {/* <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={loading ? 'Loading ...' : 'Update'}
           onPress={() => updateProfile({ firstName, lastName, username, avatar_url: avatarUrl })}
           disabled={loading}
         />
+      </View> */}
+
+      <View style={styles.verticallySpaced}>
+      <Button title="Continue" onPress={() => navigation.navigate('Home')} />
       </View>
 
       <View style={styles.verticallySpaced}>
