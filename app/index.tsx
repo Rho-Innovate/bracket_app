@@ -34,7 +34,7 @@ export default function Page() {
     </View>
   );
   */
-  return <Leaderboard />;
+  return <Profile/>;
 
 }
 
