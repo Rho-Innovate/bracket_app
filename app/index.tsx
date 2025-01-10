@@ -2,6 +2,8 @@ import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Account from '../components/Account';
+import Leaderboard from '../components/Leaderboard';
+import Profile from '../components/Profile';
 import Auth from '../components/Auth';
 import { supabase } from '../lib/supabase';
 
@@ -18,8 +20,9 @@ export default function Page() {
     });
   }, []);
 
+  /*
   if (session && session.user) {
-    return <Account key={session.user.id} session={session} />;
+    return <Explore key={session.user.id} session={session} />;
   }
 
   return (
@@ -30,7 +33,11 @@ export default function Page() {
       </View>
     </View>
   );
+  */
+  return <Leaderboard />;
+
 }
+
 
 const styles = StyleSheet.create({
   container: {
