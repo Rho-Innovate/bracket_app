@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
 
+const GrayBG = { uri: 'https://digitalassets.daltile.com/content/dam/AmericanOlean/AO_ImageFiles/minimum/AO_MN44_12x24_Gray_Matte.jpg/jcr:content/renditions/cq5dam.web.570.570.jpeg'};
+
 export default function Profile() {
   return (
     <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.header}>
         <Image
-          source={require('./placeholder.png')} // Replace this with your avatar image
+          source={GrayBG} // Replace this with your avatar image
           style={styles.avatar}
           resizeMode="stretch"
         />
@@ -98,8 +100,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
+    flex: 1,
     width: 166.8, 
-    height: 360, 
+    height: 300, 
     marginRight: 20,
     backgroundColor: '#ddd', 
   },
@@ -123,9 +126,10 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#555',
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 10,
     color: '#555',
   },
   buttonsContainer: {
@@ -136,22 +140,22 @@ const styles = StyleSheet.create({
   editButton: {
     backgroundColor: '#f3f3f3',
     paddingVertical: 10,
-    borderRadius: 5,
-    marginBottom: 10, 
+    borderRadius: 10,
+    marginBottom: 12, 
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ddd',
   },
   shareButton: {
-    backgroundColor: '#f3f3f3',
+    // backgroundColor: '#f3f3f3',
     paddingVertical: 10,
-    borderRadius: 5,
+    borderRadius: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#000',
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 12,
     color: '#000',
   },
   section: {
@@ -162,7 +166,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   rankLabel: {
@@ -175,11 +179,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   rankStart: {
-    fontSize: 16,
+    fontSize: 12,
     marginRight: 10,
   },
   rankEnd: {
-    fontSize: 16,
+    fontSize: 12,
     marginLeft: 10,
   },
   progressBar: {
@@ -194,49 +198,51 @@ const styles = StyleSheet.create({
     backgroundColor: '#6A0DAD',
   },
   progressText: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
     marginTop: 5,
   },
   experienceLabel: {
-    fontSize: 18,
+    fontSize: 12,
     marginRight: 10,
   },
   experiencePoints: {
-    fontSize: 16,
+    fontSize: 12,
     marginLeft: 10,
   },
   achievementsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginVertical: 12,
     borderColor: '#0C5B00',
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderRadius: 10,
   },
   achievementsLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#0C5B00',
   },
   achievementsPoints: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   descriptionContainer: {
     marginBottom: 20,
   },
   descriptionLabel: {
-    fontSize: 16,
-    marginBottom: 5,
+    fontSize: 14,
+    marginBottom: 16,
+    marginTop: 20,
   },
   descriptionInput: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 5,
-    height: 80,
+    height: 120,
     padding: 10,
     textAlignVertical: 'top',
   },

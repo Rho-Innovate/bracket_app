@@ -2,7 +2,7 @@ import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Account from '../components/Account';
-import Home from '../components/Navigation';
+import Home from '../components/Screens/Old Navigation';
 import Auth from '../components/Auth';
 import { supabase } from '../lib/supabase';
 import { NavigationContainer } from '@react-navigation/native';

@@ -2,7 +2,8 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Session } from '@supabase/supabase-js';
 import Account from './Account';
-import Home from './Navigation';
+import Home from './Screens/HomeScreen';
+import Navigation from './Screens/Navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type RootStackParamList = {
@@ -12,11 +13,11 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-const Navigation = ({ session }: { session: Session }) => {
+const Nav = ({ session }: { session: Session }) => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false
+        headerShown: false,
       }}
     >
       <Stack.Screen 
@@ -24,11 +25,13 @@ const Navigation = ({ session }: { session: Session }) => {
         component={Account} 
         initialParams={{ session }} 
       />
-      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen
+        name="Home"
+        component={Navigation} />
     </Stack.Navigator>
   );
 };
 
-export default Navigation;
+export default Nav;
 
 export type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
