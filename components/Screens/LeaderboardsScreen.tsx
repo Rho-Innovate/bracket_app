@@ -34,7 +34,7 @@ export default function Leaderboard() {
 
   const displayedData = mode === 'friends' ? friendsData : allPlayersData;
 
-  const renderMedal = (rank) => {
+  const renderMedal = (rank: number) => {
     switch (rank) {
       case 1:
         return '🥇';
@@ -47,7 +47,15 @@ export default function Leaderboard() {
     }
   };
 
-  const renderItem = ({ item }) => (
+  type LeaderboardItem = {
+    id: string;
+    name: string;
+    score: number;
+    rank: number;
+    medal?: string; // Optional property
+  };  
+
+  const renderItem = ({ item }: { item: LeaderboardItem }) => (
     <View
       style={[
         styles.itemContainer,
@@ -125,9 +133,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight:'bold',
+    fontSize: 16, // Font size
+    textAlign: 'center', // Center text alignment
     marginBottom: 30,
     marginTop: 15,
   },
@@ -141,14 +149,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#ddd',
     marginHorizontal: 5,
-    borderRadius: 5,
+    borderRadius: 10,
     alignItems: 'center',
   },
   activeButton: {
     backgroundColor: '#0C5B00',
   },
   toggleText: {
-    fontSize: 16,
+    fontSize: 12,
     color: '#000',
   },
   activeText: {
@@ -162,37 +170,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 25, 
+    paddingVertical: 32, 
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    borderRadius: 5,
+    borderRadius: 10,
   },
   greenBackground: {
     backgroundColor: '#0C5B00',
     borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 5,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.2,
+    // shadowRadius: 3,
+    // elevation: 5,
   },
   rank: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#000', 
     textAlign: 'right',
     marginLeft: 10,
   },
   name: {
-    fontSize: 18,
+    fontSize: 14,
     fontFamily: 'Neuzeit Grotesk',
     color: '#000',
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 36,
     textAlign: 'left',
   },
   score: {
-    fontSize: 18,
+    fontSize: 14,
     fontFamily: 'Neuzeit Grotesk',
     color: '#333',
     textAlign: 'right',
