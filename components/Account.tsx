@@ -1,14 +1,11 @@
+import { RouteProp, useNavigation } from '@react-navigation/native'
+import { StackNavigationProp } from '@react-navigation/stack'
 import { Button, Input } from '@rneui/themed'
-import { Session } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
 import { supabase } from '../lib/supabase'
-import Avatar from './Avatar';
-import { useNavigation } from '@react-navigation/native';
-import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from './Login Nav';
-import { NavigationProp } from './Login Nav';
+import Avatar from './Avatar'
+import { NavigationProp, RootStackParamList } from './Login Nav'
 
 type AccountScreenProps = {
   navigation: StackNavigationProp<RootStackParamList, 'Account'>;

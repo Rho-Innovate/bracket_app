@@ -12,6 +12,7 @@ type ProfileStackParamList = {
     OnboardingScreen2: undefined;
     OnboardingScreen3: undefined;
     OnboardingScreen4: undefined;
+    ResultsScreen: undefined; 
   };  
 
 const ProfileStack = createStackNavigator();
@@ -28,6 +29,7 @@ export default function ({ navigation }: { navigation: ProfileScreenNavigationPr
         <ProfileStack.Screen name="OnboardingScreen2" component={OnboardingScreen2} />
         <ProfileStack.Screen name="OnboardingScreen3" component={OnboardingScreen3} />
         <ProfileStack.Screen name="OnboardingScreen4" component={OnboardingScreen4} />
+        <ProfileStack.Screen name="ResultsScreen" component={ResultsScreen} />
       </ProfileStack.Navigator>
     );
   }
@@ -85,7 +87,7 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
             <View style={styles.progressContainer}>
             <Text style={styles.rankStart}>XX</Text>
             <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '30%' }]} />
+                <View style={[styles.eloProgressFill, { width: '30%' }]} />
             </View>
             <Text style={styles.rankEnd}>XXI</Text>
             </View>
@@ -98,17 +100,20 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
             <View style={styles.progressContainer}>
             <Text style={styles.experienceLabel}>⭐</Text>
             <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '67%' }]} />
+                <View style={[styles.xpProgressFill, { width: '67%' }]} />
             </View>
             <Text style={styles.experiencePoints}>6734/10000</Text>
             </View>
         </View>
 
         {/* Achievements Section */}
-        <View style={styles.achievementsContainer}>
-            <Text style={styles.achievementsLabel}>Achievements</Text>
-            <Text style={styles.achievementsPoints}>758/900</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.achievementsContainer}
+          onPress={() => navigation.navigate('ResultsScreen')}
+        >
+          <Text style={styles.achievementsLabel}>Achievements</Text>
+          <Text style={styles.achievementsPoints}>758/900</Text>
+        </TouchableOpacity>
 
         {/* Description Section */}
         <View style={styles.descriptionContainer}>
@@ -272,26 +277,26 @@ function OnboardingScreen3({ navigation }: { navigation: ProfileScreenNavigation
 
     return (
         <View style={styles.container}>
-        <View style={styles.obProgressBar}>
-            <View style={styles.progressStep} />
-            <View style={styles.progressStep} />
-            <View style={[styles.progressStep, styles.completedStep]} />
-            <View style={styles.progressStep} />
-        </View>
-        <Text style={styles.sectionTitle}>Select your area of residence.</Text>
-        <Text style={styles.subtitle}></Text>
-        <FlatList
-            data={sportsOptions}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.optionsList}
-        />
-        <TouchableOpacity
-            style={styles.nextButton}
-            onPress={() => navigation.navigate('OnboardingScreen4')}
-        >
-            <Text style={styles.nextText}>Next</Text>
-        </TouchableOpacity>
+          <View style={styles.obProgressBar}>
+              <View style={styles.progressStep} />
+              <View style={styles.progressStep} />
+              <View style={[styles.progressStep, styles.completedStep]} />
+              <View style={styles.progressStep} />
+          </View>
+          <Text style={styles.sectionTitle}>Select your area of residence.</Text>
+          <Text style={styles.subtitle}></Text>
+          <FlatList
+              data={sportsOptions}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.optionsList}
+          />
+          <TouchableOpacity
+              style={styles.nextButton}
+              onPress={() => navigation.navigate('OnboardingScreen4')}
+          >
+              <Text style={styles.nextText}>Next</Text>
+          </TouchableOpacity>
         </View>
     );  
 }
@@ -341,6 +346,86 @@ function OnboardingScreen4({ navigation }: { navigation: ProfileScreenNavigation
     );  
 }
 
+const crownImage = { uri: 'https://png.pngtree.com/png-vector/20220702/ourmid/pngtree-golden-royalty-crown-icon-image-png-image_5675578.png'};
+
+function ResultsScreen({ navigation }: { navigation: any }) {
+  return (
+    <ScrollView contentContainerStyle={styles.resultsContainer}>
+      {/* Back Button and Header */}
+      <View style={styles.resultsHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backText}>{"<"}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Victory Text */}
+      <Text style={styles.victoryText}>VICTORY!</Text>
+
+      {/* Bracket Section */}
+      <View style={styles.bracketContainer}>
+        <View style={styles.playerRow}>
+        <View style={styles.profilePic} />
+          <Text style={styles.scoreText}>    6        7        6        </Text>
+          <Image source={crownImage} style={styles.crown} />
+        </View>
+        <View style={styles.bracketLine}></View>
+        <View style={styles.playerRow}>
+        <View style={styles.profilePic} />
+          <Text style={styles.scoreText}>    3        5        2</Text>
+        </View>
+      </View>
+
+      {/* Progression Section */}
+      <View style={styles.progressionSection}>
+        <View style={styles.progressItem}>
+          <Text style={styles.eloGainText}>+65</Text>
+          <View style={styles.rankProgress}>
+            {/* <Text style={styles.rankLabel}>IV</Text> */}
+            <View style={styles.progressBar}>
+              <View style={[styles.eloProgressFill, { width: '40%' }]} />
+            </View>
+            {/* <Text style={styles.rankLabel}>V</Text> */}
+          </View>
+        </View>
+        <View style={styles.progressItem}>
+          <Text style={styles.experienceGainText}>+230</Text>
+          <View style={styles.experienceProgress}>
+            <View style={styles.progressBar}>
+              <View style={[styles.xpProgressFill, { width: '68%' }]} />
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Rewards Section */}
+      <View style={styles.rewardsContainer}>
+        <View style={styles.achievementBox}>
+          <View style={styles.stamina} />
+          <Text style={styles.rewardText}>+99</Text>
+        </View>
+        <View style={styles.achievementBox}>
+          <Text style={styles.achievementText}>Novice</Text>
+          <Text style={styles.unlockedText}>UNLOCKED!</Text>
+        </View>
+        <View style={styles.achievementBox}>
+          <Text style={styles.achievementText}>Champ</Text>
+          <Text style={styles.unlockedText}>UNLOCKED!</Text>
+        </View>
+      </View>
+
+      {/* Buttons */}
+      <View style={styles.resultsButtonsContainer}>
+        <TouchableOpacity style={styles.resultShareButton}>
+          <Text style={styles.shareButtonText}>Share</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.continueButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.continueButtonText}>Continue</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -372,6 +457,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
+    paddingBottom: 20,
   },
   name: {
     fontSize: 20,
@@ -437,6 +523,7 @@ const styles = StyleSheet.create({
   rankLabel: {
     fontSize: 16,
     color: '#555',
+    paddingHorizontal: 8,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -452,15 +539,20 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   progressBar: {
+    // width: 140,
     flex: 1,
-    height: 10,
+    height: 32,
     backgroundColor: '#ddd',
-    borderRadius: 5,
+    borderRadius: 10,
     overflow: 'hidden',
   },
-  progressFill: {
+  eloProgressFill: {
     height: '100%',
     backgroundColor: '#6A0DAD',
+  },
+  xpProgressFill: {
+    height: '100%',
+    backgroundColor: '#88D5FF',
   },
   progressText: {
     fontSize: 12,
@@ -577,5 +669,186 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginVertical: 12,
-  }
+  },
+
+  /////////////////////////////////////
+
+  resultsContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 35,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backButton: {
+    marginRight: 16,
+  },
+  backText: {
+    fontSize: 18,
+    color: '#000',
+  },
+  headerTitle: {
+    alignItems: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  victoryText: {
+    fontSize: 60,
+    fontWeight: 'bold',
+    color: '#0C5B00',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
+  bracketContainer: {
+    // alignItems: 'center',
+    marginVertical: 16,
+  },
+  playerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  playerAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 8,
+  },
+  scoreText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  bracketLine: {
+    flex: 1,
+    height: 4,
+    backgroundColor: '#000',
+  },
+  crown: {
+    width: 30,
+    height: 30,
+    marginTop: -20,
+  },
+  progressionContainer: {
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  eloText: {
+    fontSize: 18,
+    color: '#6A0DAD',
+  },
+  experienceText: {
+    fontSize: 18,
+    color: '#6A0DAD',
+  },
+  rewardsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  currencyText: {
+    fontSize: 16,
+    marginVertical: 4,
+  },
+  achievementText: {
+    fontSize: 12,
+    marginVertical: 4,
+  },
+  resultsButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  resultShareButton: {
+    flex: 1,
+    backgroundColor: '#ddd',
+    padding: 16,
+    borderRadius: 8,
+    marginRight: 8,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  continueButton: {
+    flex: 1,
+    backgroundColor: '#0C5B00',
+    padding: 16,
+    borderRadius: 8,
+    marginLeft: 8,
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    fontSize: 16,
+    color: '#fff',
+  },
+  progressionSection: {
+    // flexDirection: 'row',
+    marginTop: 20,
+  },
+  progressItem: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  eloGainText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#6A0DAD',
+    marginBottom: 10,
+  },
+  rankProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // width: '80%',
+  },
+  experienceProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },  
+  experienceGainText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#88D5FF',
+    marginBottom: 10,
+  },
+  rewardText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#CD0003',
+  },
+  achievementBox: {
+    width: 100,
+    height: 100,
+    marginHorizontal: 10,
+    padding: 10,
+    backgroundColor: '#f3f3f3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  unlockedText: {
+    fontSize: 11,
+    color: '#555',
+  },
+  profilePic: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#ccc',
+    marginRight: 20,
+  },
+  stamina: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#CD0003',
+    marginBottom: 8,
+  },
+
 });
