@@ -1,13 +1,10 @@
+import { NavigationIndependentTree } from '@react-navigation/native';
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Account from '../components/Account';
-import Home from '../components/Screens/Old Navigation';
 import Auth from '../components/Auth';
-import { supabase } from '../lib/supabase';
-import { NavigationContainer } from '@react-navigation/native';
 import Navigation from '../components/Login Nav';
-import { NavigationIndependentTree } from '@react-navigation/native';
+import { supabase } from '../lib/supabase';
 
 export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
@@ -40,8 +37,9 @@ export default function Page() {
       </View>
     </View>
   );
+  
 
-  // return <Home />;
+  //return <EventCreationPage />;
 }
 
 const styles = StyleSheet.create({
