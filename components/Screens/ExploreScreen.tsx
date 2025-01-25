@@ -1,17 +1,7 @@
-import { Text, View, StyleSheet, TextInput, ScrollView, Button, TouchableOpacity, TextProps, Animated } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { type IconProps } from '@expo/vector-icons/build/createIconSet';
-import { type ComponentProps } from 'react';
+import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import { Image } from 'expo-image';
-import * as Font from 'expo-font';
-import { useEffect, useState } from 'react';
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { ParamListBase } from '@react-navigation/native';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 type ExploreScreenNavigationProp = StackNavigationProp<ExploreStackParamList>;

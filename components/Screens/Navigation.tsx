@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { type IconProps } from "@expo/vector-icons/build/createIconSet";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React, { type ComponentProps } from "react";
-import EventCreationPage from "./EventCreationPage"; // Adjust the path as necessary
+import EventCreationPage from "./EventCreationPage";
 import ExploreScreen from "./ExploreScreen";
 import FriendsScreen from "./FriendsScreen";
 import HomeScreen from "./HomeScreen";
