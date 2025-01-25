@@ -35,22 +35,32 @@ function HostPage() {
 
   const handleSubmit = async () => {
     try {
-      // Insert into the 'events' table with all necessary fields
+      // Fetch the authenticated user's data
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  
+      if (sessionError || !sessionData?.session) {
+        Alert.alert('Error', 'User is not authenticated.');
+        return;
+      }
+  
+      const user = sessionData.session.user;
+  
+      // Insert the event details into the 'events' table
       const { data, error } = await supabase
         .from('events')
         .insert([
           {
             name: eventName,
-            date: eventDate, // Ensure format is 'YYYY-MM-DD'
+            date: eventDate,
             location: eventLocation,
             description: eventDescription,
-            category: 'General', // Example category (update as needed)
-            organizer_id: '12345', // Example organizer_id (update dynamically)
+            category: 'General', // Example category
+            organizer_id: user.id, // Use the authenticated user's ID
           },
         ]);
   
       if (error) {
-        throw error; // If an error occurs, throw it
+        throw error; // Throw error if insertion fails
       }
   
       Alert.alert('Success', 'Event created successfully!');
@@ -59,9 +69,11 @@ function HostPage() {
       setEventLocation('');
       setEventDescription('');
     } catch (error: any) {
-      Alert.alert('Error', error.message); // Display error message
+      Alert.alert('Error', error.message);
     }
   };
+  
+  
   
 
   return (
