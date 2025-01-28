@@ -1,6 +1,6 @@
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Button, FlatList } from 'react-native';
+import { FlatList, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const avatarPic = { uri: 'https://cf-st.sc-cdn.net/3d/render/765808989-101026212098_3-s5-v1.webp?ua=2'};
 

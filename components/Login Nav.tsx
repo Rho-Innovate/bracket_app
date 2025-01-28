@@ -1,10 +1,9 @@
-import React from 'react';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Session } from '@supabase/supabase-js';
+import React from 'react';
 import Account from './Account';
-import Home from './Screens/HomeScreen';
 import Navigation from './Screens/Navigation';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export type RootStackParamList = {
   Account: { session: Session };
