@@ -53,7 +53,7 @@ function JoinScreen({ navigation }: { navigation: ExploreScreenNavigationProp })
       </View>
 
       {/* Search bar */}
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.MapChatContainer}>
         <View style={styles.relSearchTopContainer}>
           <TextInput
             style={styles.relSearchBar}
