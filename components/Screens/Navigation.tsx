@@ -3,7 +3,6 @@ import { type IconProps } from "@expo/vector-icons/build/createIconSet";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React, { type ComponentProps } from "react";
 import EventCreationPage from "./EventCreationPage";
-import ExploreScreen from "./ExploreScreen";
 import FriendsScreen from "./FriendsScreen";
 import HomeScreen from "./HomeScreen";
 import LeaderboardsScreen from "./LeaderboardsScreen";
@@ -66,7 +65,7 @@ export default function Navigation() {
           ),
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Explore"
         component={ExploreScreen}
         options={{
@@ -78,7 +77,7 @@ export default function Navigation() {
             />
           ),
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Leaderboards"
         component={LeaderboardsScreen}
