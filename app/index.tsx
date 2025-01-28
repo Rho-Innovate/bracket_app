@@ -37,8 +37,6 @@ export default function Page() {
       </View>
     </View>
   );
-  
-
   //return <EventCreationPage />;
 }
 
