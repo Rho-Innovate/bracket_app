@@ -1,10 +1,10 @@
-import { NavigationIndependentTree } from '@react-navigation/native';
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Auth from '../components/Auth';
-import Navigation from '../components/Login Nav';
 import { supabase } from '../lib/supabase';
+import Navigation from '../components/Login Nav';
+import { NavigationIndependentTree } from '@react-navigation/native';
 
 export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
@@ -22,45 +22,21 @@ export default function Page() {
   if (session && session.user) {
     return (
       <NavigationIndependentTree>
-        {/* <NavigationContainer> */}
-          <Navigation session={session} />
-        {/* </NavigationContainer> */}
+        <Navigation session={session} />
       </NavigationIndependentTree>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.main}>
-        <Text style={styles.title}>BRACKET</Text>
-        <Auth />
-      </View>
+      <Auth />
     </View>
   );
-  //return <EventCreationPage />;
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 24,
+    flex: 1, 
+    backgroundColor: '#fff', 
   },
-  main: {
-    flex: 1,
-    justifyContent: 'center',
-    maxWidth: 960,
-  },
-  title: {
-    fontSize: 64,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  subtitle: {
-    fontSize: 36,
-    color: '#38434D',
-  },
-  authContainer: {
-    width: '100%',
-  }
 });
