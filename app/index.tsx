@@ -1,10 +1,9 @@
+import { NavigationIndependentTree } from '@react-navigation/native';
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Account from '../components/Account';
-import Leaderboard from '../components/Leaderboard';
-import Profile from '../components/Profile';
 import Auth from '../components/Auth';
+import Navigation from '../components/Login Nav';
 import { supabase } from '../lib/supabase';
 
 export default function Page() {
@@ -20,24 +19,26 @@ export default function Page() {
     });
   }, []);
 
-  /*
   if (session && session.user) {
-    return <Explore key={session.user.id} session={session} />;
+    return (
+      <NavigationIndependentTree>
+        {/* <NavigationContainer> */}
+          <Navigation session={session} />
+        {/* </NavigationContainer> */}
+      </NavigationIndependentTree>
+    );
   }
 
   return (
     <View style={styles.container}>
       <View style={styles.main}>
-        <Text style={styles.title}>B R A C K E T</Text>
+        <Text style={styles.title}>BRACKET</Text>
         <Auth />
       </View>
     </View>
   );
-  */
-  return <Profile/>;
-
+  //return <EventCreationPage />;
 }
-
 
 const styles = StyleSheet.create({
   container: {
