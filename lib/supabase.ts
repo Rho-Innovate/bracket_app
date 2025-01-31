@@ -13,3 +13,58 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 })
+
+// Auth queries
+
+//POST
+export const signUpAndCreateProfile = 
+async (email: string, password: string, profileData: { username: string, first_name: string, last_name: string, age: Int, avatar_url?: string }) => {
+  const {  data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (signUpError) throw new Error(signUpError.message);
+
+  const user = signUpData.user;
+
+  if (user) {
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: user.id, // Use the same ID as `auth.users`
+      first_name: profileData.first_name,
+      last_name: profileData.last_name,
+      avatar_url: profileData.avatar_url || null,
+    });
+
+    if (profileError) throw new Error(profileError.message);
+  }
+
+  return signUpData;
+
+}
+
+//POST
+export const signInWithEmail = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+//POST
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw new Error(error.message);
+};
+
+//Profile queries
+
+//PUT
+
+
+// Game Request queries
+
+//POST
