@@ -1,22 +1,49 @@
-import { Text, View, StyleSheet, TextInput, ScrollView, TouchableOpacity, Image } from 'react-native';
-import React from 'react';
+import { searchGameRequests } from '@/lib/supabase';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const GrayBG = { uri: 'https://digitalassets.daltile.com/content/dam/AmericanOlean/AO_ImageFiles/minimum/AO_MN44_12x24_Gray_Matte.jpg/jcr:content/renditions/cq5dam.web.570.570.jpeg' };
 
+// Helper function to map sport names to IDs
+function getSportId(sport: string) {
+  const sportMap: Record<string, number> = { Tennis: 1, Basketball: 2, Soccer: 3 };
+  return sportMap[sport] || 0;
+}
+
+// Helper function to format date
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+}
+
 export default function HomeScreen() {
-  const events = [
-    { title: "Event 1", date: "FRI, SEP 6 • 9:00 AM", location: "Orange County Great Park" },
-    { title: "Event 2", date: "SAT, SEP 7 • 10:00 AM", location: "Location 2" },
-    { title: "Event 3", date: "SUN, SEP 8 • 11:00 AM", location: "Location 3" },
-    { title: "Event 4", date: "MON, SEP 9 • 12:00 PM", location: "Location 4" },
-    { title: "Event 5", date: "TUE, SEP 10 • 1:00 PM", location: "Location 5" }
-  ];
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const fetchedEvents = await searchGameRequests({
+          status: 'Open',
+          sort_by: 'recency',
+          sort_order: 'desc',
+        });
+        setEvents(fetchedEvents);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TextInput style={styles.searchBar} placeholder="Search home..." placeholderTextColor="#64748B" />
       </View>
+      
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.buttonContainer}>
           {['Events', 'Matchups', 'Going', 'Saved'].map((label) => (
@@ -26,23 +53,30 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {['Tennis', 'Basketball', 'Soccer'].map((category) => (
-          <View key={category} style={styles.categoryContainer}>
-            <Text style={styles.title}>{category}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
-              {events.map((event, index) => (
-                <View key={index} style={styles.eventItem}>
-                  <Image source={GrayBG} style={styles.image} />
-                  <View style={styles.eventContent}>
-                    <Text style={styles.eventTitle}>{event.title}</Text>
-                    <Text style={styles.eventDate}>{event.date}</Text>
-                    <Text style={styles.eventLocation}>{event.location}</Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        ))}
+        {loading ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          // Display categories (Tennis, Basketball, Soccer) from game_requests
+          ['Tennis', 'Basketball', 'Soccer'].map((category) => (
+            <View key={category} style={styles.categoryContainer}>
+              <Text style={styles.title}>{category}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
+                {events
+                  .filter((event) => event.sport_id === getSportId(category))
+                  .map((event, index) => (
+                    <View key={index} style={styles.eventItem}>
+                      <Image source={GrayBG} style={styles.image} />
+                      <View style={styles.eventContent}>
+                        <Text style={styles.eventTitle}>{event.description}</Text>
+                        <Text style={styles.eventDate}>{formatDate(event.requested_time)}</Text>
+                        <Text style={styles.eventLocation}>{`Players: ${event.current_players}/${event.max_players}`}</Text>
+                      </View>
+                    </View>
+                  ))}
+              </ScrollView>
+            </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -52,12 +86,11 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: '#fff',
-    // alignItems: 'center',
     justifyContent: 'center',
   },
   header: {
     position: 'absolute',
-    top: 0,
+    top: 0, 
     left: 0,
     right: 0,
     zIndex: 1000,
@@ -77,7 +110,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    // justifyContent: 'space-around',
     marginTop: 40,
     marginBottom: 16,
     marginLeft: 35,
