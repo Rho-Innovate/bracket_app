@@ -10,7 +10,6 @@ function getSportId(sport: string) {
   return sportMap[sport] || 0;
 }
 
-// Helper function to format date
 function formatDate(dateString: string) {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
