@@ -345,63 +345,48 @@ export const searchGameRequests = async (filters: {
   sport_id?: number;
   requested_time_from?: string;
   requested_time_to?: string;
-  status?: 'Open' | 'Closed';
-  location?: { lat: number; lng: number };
-  radius?: number; // Radius in meters
-  sort_by?: 'recency' | 'max_players' | 'distance'; // Sorting criteria
-  sort_order?: 'asc' | 'desc';
+  status?: "Open" | "Closed";
+  sort_by?: "recency" | "max_players";
+  sort_order?: "asc" | "desc";
 }) => {
   try {
-    let query = supabase.from('game_requests').select(`
-      *,
-      ST_Distance(location, ST_SetSRID(ST_Point(${filters.location?.lng || 0}, ${filters.location?.lat || 0}), 4326)) as distance
-    `);
+    let query = supabase.from("game_requests").select("*"); // ✅ Fetch all columns directly
 
     // Apply filters
     if (filters.sport_id) {
-      query = query.eq('sport_id', filters.sport_id);
+      query = query.eq("sport_id", filters.sport_id);
     }
 
     if (filters.requested_time_from) {
-      query = query.gte('requested_time', filters.requested_time_from);
+      query = query.gte("requested_time", filters.requested_time_from);
     }
 
     if (filters.requested_time_to) {
-      query = query.lte('requested_time', filters.requested_time_to);
+      query = query.lte("requested_time", filters.requested_time_to);
     }
 
     if (filters.status) {
-      query = query.eq('status', filters.status);
+      query = query.eq("status", filters.status);
     }
 
-    // Apply radius filter
-    if (filters.location && filters.radius) {
-      query = query.filter(
-        'location',
-        'ST_DWithin',
-        `ST_SetSRID(ST_Point(${filters.location.lng}, ${filters.location.lat}), 4326), ${filters.radius}`
-      );
+    // Sorting
+    if (filters.sort_by === "recency") {
+      query = query.order("requested_time", { ascending: filters.sort_order === "asc" });
+    } else if (filters.sort_by === "max_players") {
+      query = query.order("max_players", { ascending: filters.sort_order === "asc" });
     }
 
-    // Apply sorting
-    if (filters.sort_by === 'recency') {
-      query = query.order('requested_time', { ascending: filters.sort_order === 'asc' });
-    } else if (filters.sort_by === 'max_players') {
-      query = query.order('max_players', { ascending: filters.sort_order === 'asc' });
-    } else if (filters.sort_by === 'distance' && filters.location) {
-      query = query.order('distance', { ascending: filters.sort_order === 'asc' });
-    }
-
+    // Fetch data
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error searching for game requests:', error.message);
+      console.error("Error searching for game requests:", error.message);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error('Unexpected error searching for game requests:', error);
+    console.error("Unexpected error searching for game requests:", error);
     throw error;
   }
 };
