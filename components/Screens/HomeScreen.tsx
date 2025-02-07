@@ -1,6 +1,6 @@
 import { searchGameRequests } from '@/lib/supabase';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const GrayBG = { uri: 'https://digitalassets.daltile.com/content/dam/AmericanOlean/AO_ImageFiles/minimum/AO_MN44_12x24_Gray_Matte.jpg/jcr:content/renditions/cq5dam.web.570.570.jpeg' };
 
@@ -16,6 +16,76 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 }
 
+import { StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+  },
+  searchBar: {
+    height: 40,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 10,
+  },
+  button: {
+    padding: 10,
+    backgroundColor: '#007bff',
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#fff',
+  },
+  categoryContainer: {
+    marginVertical: 10,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 5,
+  },
+  scrollContainer: {
+    paddingHorizontal: 10,
+  },
+  eventItem: {
+    width: 200,
+    marginRight: 10,
+  },
+  image: {
+    width: '100%',
+    height: 100,
+    borderRadius: 5,
+  },
+  eventContent: {
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  eventDate: {
+    fontSize: 14,
+    color: '#888',
+  },
+  eventLocation: {
+    fontSize: 14,
+    color: '#888',
+  },
+});
+
 export default function HomeScreen() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +98,7 @@ export default function HomeScreen() {
           sort_by: 'recency',
           sort_order: 'desc',
         });
+
         setEvents(fetchedEvents);
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -35,6 +106,7 @@ export default function HomeScreen() {
         setLoading(false);
       }
     };
+
     fetchEvents();
   }, []);
 
@@ -67,9 +139,9 @@ export default function HomeScreen() {
                     <View key={index} style={styles.eventItem}>
                       <Image source={GrayBG} style={styles.image} />
                       <View style={styles.eventContent}>
-                        <Text style={styles.eventTitle}>{event.description}</Text>
-                        <Text style={styles.eventDate}>{formatDate(event.requested_time)}</Text>
-                        <Text style={styles.eventLocation}>{`Players: ${event.current_players}/${event.max_players}`}</Text>
+                        <Text style={styles.eventTitle}>{event.description || 'No description available'}</Text>
+                        <Text style={styles.eventDate}>{event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}</Text>
+                        <Text style={styles.eventLocation}>{`Players: ${event.current_players || 0}/${event.max_players || '∞'}`}</Text>
                       </View>
                     </View>
                   ))}
@@ -81,97 +153,3 @@ export default function HomeScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-  },
-  header: {
-    position: 'absolute',
-    top: 0, 
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-    backgroundColor: '#fff',
-  },
-  searchBar: {
-    height: 45,
-    width: 355,
-    borderColor: '#f1f1f1',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    alignSelf: 'flex-start',
-    marginLeft: 35,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    marginTop: 40,
-    marginBottom: 16,
-    marginLeft: 35,
-  },
-  button: {
-    backgroundColor: '#F1F1F1',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    elevation: 3,
-    marginRight: 8,
-  },
-  buttonText: {
-    color: '#000',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  categoryContainer: {
-    height: 250,
-    marginBottom: 20,
-    borderRadius: 8,
-  },
-  title: {
-    paddingLeft: 35,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    alignSelf: 'flex-start',
-  },
-  scrollContainer: {
-    paddingLeft: 35,
-    paddingRight: 10,
-    flexGrow: 1,
-  },
-  eventItem: {
-    marginRight: 12,
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-  },
-  image: {
-    width: 220,
-    height: 130,
-    borderRadius: 10,
-    marginBottom: 5,
-  },
-  eventContent: {
-    alignItems: 'flex-start',
-  },
-  eventTitle: {
-    color: '#000',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  eventDate: {
-    color: '#555',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  eventLocation: {
-    color: '#777',
-    fontSize: 12,
-    marginTop: 2,
-  },
-});
