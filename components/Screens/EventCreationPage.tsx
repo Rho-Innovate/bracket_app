@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import React, { useState } from 'react';
 import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '@/lib/supabase';
+import { createGameRequest } from '@/lib/supabase';
 
 
 type ExploreStackParamList = {
@@ -29,6 +30,7 @@ function HostPage() {
   const [eventDate, setEventDate] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const [eventDescription, setEventDescription] = useState('');
+  const [eventMaxPlayers, setEventMaxPlayers] = useState('');
 
   const handleSubmit = async () => {
     try {
@@ -41,30 +43,31 @@ function HostPage() {
       }
   
       const user = sessionData.session.user;
-  
-      // Insert the event details into the 'events' table
-      const { data, error } = await supabase
-        .from('events')
-        .insert([
-          {
-            name: eventName,
-            date: eventDate,
-            location: eventLocation,
+      
+      const handleCreateGameRequest = async () => {
+        try {
+            const gameData = {
+            creator_id: user.id,
+            sport_id: 1,
+            location: {lat: 47.606209, lng: 122.332069},
+            requested_time: eventDate,
             description: eventDescription,
-            category: 'General', // Example category
-            organizer_id: user.id, // Use the authenticated user's ID
-          },
-        ]);
-  
-      if (error) {
-        throw error; // Throw error if insertion fails
-      }
+            max_players: parseInt(eventMaxPlayers, 10),
+            }
+          const data = await createGameRequest(gameData)
+        } catch (error: any) {
+          Alert.alert('Error', error.message);
+        }
+      };
+
+      handleCreateGameRequest();
   
       Alert.alert('Success', 'Event created successfully!');
       setEventName('');
       setEventDate('');
       setEventLocation('');
       setEventDescription('');
+      setEventMaxPlayers('');
     } catch (error: any) {
       Alert.alert('Error', error.message);
     }
@@ -115,6 +118,17 @@ function HostPage() {
           onChangeText={setEventDescription}
           placeholder="Enter event description"
           multiline
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Max Players</Text>
+        <TextInput
+          style={styles.input}
+          value={eventMaxPlayers}
+          onChangeText={setEventMaxPlayers}
+          placeholder="Enter Max Players"
+          keyboardType="numeric"
         />
       </View>
 
