@@ -25,11 +25,15 @@ function HomeScreen() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const fetchedEvents = await searchGameRequests({
-          status: 'Open',
-          sort_by: 'recency',
-          sort_order: 'desc'
-        });
+        const fetchedEvents = await searchGameRequests(
+          {
+            status: 'Open',
+            sort_by: 'recency',
+            sort_order: 'desc'
+          },
+          styles.categoryContainer,
+          { marginVertical: 0 }
+        );
 
         setEvents(fetchedEvents);
       } catch (error) {
@@ -216,6 +220,20 @@ const styles = StyleSheet.create({
   },
   eventContent: {
     alignItems: 'flex-start',
+  },
+  eventTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  eventDate: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  eventLocation: {
+    fontSize: 12,
+    color: '#666',
   },
 });
 
