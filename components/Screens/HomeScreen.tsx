@@ -1,6 +1,6 @@
-import { searchGameRequests } from '@/lib/supabase';
+import { joinGameRequest, searchGameRequests } from '@/lib/supabase';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const GrayBG = { uri: 'https://digitalassets.daltile.com/content/dam/AmericanOlean/AO_ImageFiles/minimum/AO_MN44_12x24_Gray_Matte.jpg/jcr:content/renditions/cq5dam.web.570.570.jpeg' };
 
@@ -16,79 +16,11 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 }
 
-import { StyleSheet } from 'react-native';
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    padding: 10,
-    backgroundColor: '#f8f8f8',
-  },
-  searchBar: {
-    height: 40,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 10,
-  },
-  button: {
-    padding: 10,
-    backgroundColor: '#007bff',
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#fff',
-  },
-  categoryContainer: {
-    marginVertical: 10,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 5,
-  },
-  scrollContainer: {
-    paddingHorizontal: 10,
-  },
-  eventItem: {
-    width: 200,
-    marginRight: 10,
-  },
-  image: {
-    width: '100%',
-    height: 100,
-    borderRadius: 5,
-  },
-  eventContent: {
-    padding: 10,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 5,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  eventDate: {
-    fontSize: 14,
-    color: '#888',
-  },
-  eventLocation: {
-    fontSize: 14,
-    color: '#888',
-  },
-});
-
-export default function HomeScreen() {
+function HomeScreen() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedEvent, setExpandedEvent] = useState<number | null>(null); // Track expanded event
+  const [joining, setJoining] = useState<{ [key: number]: boolean }>({}); // Track joining state
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -96,7 +28,7 @@ export default function HomeScreen() {
         const fetchedEvents = await searchGameRequests({
           status: 'Open',
           sort_by: 'recency',
-          sort_order: 'desc',
+          sort_order: 'desc'
         });
 
         setEvents(fetchedEvents);
@@ -110,12 +42,28 @@ export default function HomeScreen() {
     fetchEvents();
   }, []);
 
+  // Function to handle joining an event
+  const handleJoinEvent = async (eventId: number) => {
+    try {
+      setJoining((prev) => ({ ...prev, [eventId]: true }));
+
+      const updatedEvent = await joinGameRequest(eventId);
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => (event.id === eventId ? updatedEvent : event))
+      );
+    } catch (error) {
+      console.error('Error joining event:', error);
+    } finally {
+      setJoining((prev) => ({ ...prev, [eventId]: false }));
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TextInput style={styles.searchBar} placeholder="Search home..." placeholderTextColor="#64748B" />
       </View>
-      
+
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.buttonContainer}>
           {['Events', 'Matchups', 'Going', 'Saved'].map((label) => (
@@ -128,7 +76,6 @@ export default function HomeScreen() {
         {loading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
-          // Display categories (Tennis, Basketball, Soccer) from game_requests
           ['Tennis', 'Basketball', 'Soccer'].map((category) => (
             <View key={category} style={styles.categoryContainer}>
               <Text style={styles.title}>{category}</Text>
@@ -137,11 +84,28 @@ export default function HomeScreen() {
                   .filter((event) => event.sport_id === getSportId(category))
                   .map((event, index) => (
                     <View key={index} style={styles.eventItem}>
-                      <Image source={GrayBG} style={styles.image} />
+                      <TouchableOpacity onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}>
+                        <Image source={GrayBG} style={styles.image} />
+                      </TouchableOpacity>
                       <View style={styles.eventContent}>
                         <Text style={styles.eventTitle}>{event.description || 'No description available'}</Text>
                         <Text style={styles.eventDate}>{event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}</Text>
                         <Text style={styles.eventLocation}>{`Players: ${event.current_players || 0}/${event.max_players || '∞'}`}</Text>
+
+                        {expandedEvent === event.id && (
+                          <View style={styles.dropdown}>
+                            <Text style={styles.detailsText}>More details about this event...</Text>
+                            <TouchableOpacity
+                              style={styles.joinButton}
+                              onPress={() => handleJoinEvent(event.id)}
+                              disabled={joining[event.id] || event.current_players >= event.max_players}
+                            >
+                              <Text style={styles.joinButtonText}>
+                                {event.current_players >= event.max_players ? 'Full' : joining[event.id] ? 'Joining...' : 'Join Event'}
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
                     </View>
                   ))}
@@ -153,3 +117,106 @@ export default function HomeScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  dropdown: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#f1f1f1',
+    borderRadius: 8,
+  },
+  detailsText: {
+    fontSize: 12,
+    color: '#555',
+    marginBottom: 10,
+  },
+  joinButton: {
+    backgroundColor: '#007bff',
+    padding: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  container: {
+    flexGrow: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: '#fff',
+  },
+  searchBar: {
+    height: 45,
+    width: 355,
+    borderColor: '#f1f1f1',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+    marginLeft: 35,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    marginTop: 40,
+    marginBottom: 16,
+    marginLeft: 35,
+  },
+  button: {
+    backgroundColor: '#F1F1F1',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    elevation: 3,
+    marginRight: 8,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  categoryContainer: {
+    height: 250,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+  title: {
+    paddingLeft: 35,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  scrollContainer: {
+    paddingLeft: 35,
+    paddingRight: 10,
+    flexGrow: 1,
+  },
+  eventItem: {
+    marginRight: 12,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  image: {
+    width: 220,
+    height: 130,
+    borderRadius: 10,
+    marginBottom: 5,
+  },
+  eventContent: {
+    alignItems: 'flex-start',
+  },
+});
+
+export default HomeScreen;
