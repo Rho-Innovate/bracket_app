@@ -342,13 +342,13 @@ export const fetchOwnGameRequests = async (creatorId: string) => {
  * Search for game requests based on filters, radius, and sorting criteria.
  */
 export const searchGameRequests = async (filters: {
-  sport_id?: number;
-  requested_time_from?: string;
-  requested_time_to?: string;
-  status?: "Open" | "Closed";
-  sort_by?: "recency" | "max_players";
-  sort_order?: "asc" | "desc";
-}) => {
+  sport_id?: number
+  requested_time_from?: string
+  requested_time_to?: string
+  status?: "Open" | "Closed"
+  sort_by?: "recency" | "max_players"
+  sort_order?: "asc" | "desc"
+}, categoryContainer: any, p0: { marginVertical: number }) => {
   try {
     let query = supabase.from("game_requests").select("*"); // ✅ Fetch all columns directly
 
@@ -390,6 +390,42 @@ export const searchGameRequests = async (filters: {
     throw error;
   }
 };
+
+export const joinGameRequest = async (gameId: number) => {
+  try {
+    // Get current game data
+    const { data: game, error: fetchError } = await supabase
+      .from("game_requests")
+      .select("*")
+      .eq("id", gameId)
+      .single();
+
+    if (fetchError) throw new Error(fetchError.message);
+
+    // Prevent overbooking
+    if (game.current_players >= game.max_players) {
+      throw new Error("Game is full.");
+    }
+
+    // Update current players
+    const updatedPlayers = game.current_players + 1;
+
+    const { data, error: updateError } = await supabase
+      .from("game_requests")
+      .update({ current_players: updatedPlayers })
+      .eq("id", gameId)
+      .select()
+      .single();
+
+    if (updateError) throw new Error(updateError.message);
+
+    return data; // Return updated event
+  } catch (error) {
+    console.error("Error joining game request:", error);
+    throw error;
+  }
+};
+
 
 
 //DELETE
