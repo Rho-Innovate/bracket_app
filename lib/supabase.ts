@@ -446,11 +446,9 @@ export const deleteGameRequest = async (gameId: number, creatorId: string) => {
   }
 };
 
-//POST
-//Uses a User ID and additional data to post a game onto the app's feed
+
+// Join Request Queries
 
 
-
-//
 
 
