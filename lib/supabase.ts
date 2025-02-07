@@ -348,7 +348,7 @@ export const searchGameRequests = async (filters: {
   status?: "Open" | "Closed"
   sort_by?: "recency" | "max_players"
   sort_order?: "asc" | "desc"
-}, categoryContainer: any, p0: { marginVertical: number }) => {
+}) => {
   try {
     let query = supabase.from("game_requests").select("*"); // ✅ Fetch all columns directly
 

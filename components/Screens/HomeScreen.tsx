@@ -217,6 +217,20 @@ const styles = StyleSheet.create({
   eventContent: {
     alignItems: 'flex-start',
   },
+  eventLocation: {
+    fontSize: 12,
+    color: '#666',
+  },
+  eventDate: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  eventTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
 });
 
 export default HomeScreen;
