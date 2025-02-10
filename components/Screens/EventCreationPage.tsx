@@ -1,7 +1,7 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import { createClient } from '@supabase/supabase-js';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Button, StyleSheet, Text, TextInput, View, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { createGameRequest } from '@/lib/supabase';
 
@@ -72,68 +72,68 @@ function HostPage() {
       Alert.alert('Error', error.message);
     }
   };
-  
-  
-  
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Create Event</Text>
+    // 
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <Text style={styles.header}>Create Event</Text>
 
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Event Name</Text>
-        <TextInput
-          style={styles.input}
-          value={eventName}
-          onChangeText={setEventName}
-          placeholder="Enter event name"
-        />
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Event Name</Text>
+          <TextInput
+            style={styles.input}
+            value={eventName}
+            onChangeText={setEventName}
+            placeholder="Enter event name"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Event Date</Text>
+          <TextInput
+            style={styles.input}
+            value={eventDate}
+            onChangeText={setEventDate}
+            placeholder="YYYY-MM-DD"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Event Location</Text>
+          <TextInput
+            style={styles.input}
+            value={eventLocation}
+            onChangeText={setEventLocation}
+            placeholder="Enter event location"
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Event Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={eventDescription}
+            onChangeText={setEventDescription}
+            placeholder="Enter event description"
+            multiline
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Max Players</Text>
+          <TextInput
+            style={styles.input}
+            value={eventMaxPlayers}
+            onChangeText={setEventMaxPlayers}
+            placeholder="Enter Max Players"
+            keyboardType="numeric"
+          />
+        </View>
+
+        <Button title="Create Event" onPress={handleSubmit} />
       </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Event Date</Text>
-        <TextInput
-          style={styles.input}
-          value={eventDate}
-          onChangeText={setEventDate}
-          placeholder="YYYY-MM-DD"
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Event Location</Text>
-        <TextInput
-          style={styles.input}
-          value={eventLocation}
-          onChangeText={setEventLocation}
-          placeholder="Enter event location"
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Event Description</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={eventDescription}
-          onChangeText={setEventDescription}
-          placeholder="Enter event description"
-          multiline
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>Max Players</Text>
-        <TextInput
-          style={styles.input}
-          value={eventMaxPlayers}
-          onChangeText={setEventMaxPlayers}
-          placeholder="Enter Max Players"
-          keyboardType="numeric"
-        />
-      </View>
-
-      <Button title="Create Event" onPress={handleSubmit} />
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
