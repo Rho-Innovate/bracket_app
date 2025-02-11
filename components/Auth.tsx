@@ -67,7 +67,7 @@ export default function Auth() {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <Image
-            source={require("./logo.png")} // Replace with your logo path
+            source={require("../assets/images/logo.png")} // Replace with your logo path
             style={styles.logo}
           />
           <Text style={styles.title}>Log in</Text>
