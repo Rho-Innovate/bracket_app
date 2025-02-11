@@ -12,11 +12,13 @@ import { Session } from '@supabase/supabase-js'; // Supabase session for user au
 import React from 'react';
 import Account from './Account'; // Account screen component
 import Navigation from '../Screens/Navigation'; // Home screen component
+import Signup from './Signup';
 
 // Define route parameters for the stack navigator
 export type RootStackParamList = {
   Account: { session: Session }; // Pass session data to the Account screen
   Home: undefined; // Home screen with no additional parameters
+  Signup: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -37,6 +39,9 @@ const Nav = ({ session }: { session: Session }) => {
 
       {/* Home Screen */}
       <Stack.Screen name="Home" component={Navigation} />
+
+      {/* Signup Screen */}
+      <Stack.Screen name="Signup" component={Signup} />
     </Stack.Navigator>
   );
 };

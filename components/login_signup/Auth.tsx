@@ -1,5 +1,3 @@
-//This is the first screen people see - sign in or sign up page
-
 import { Button, Input } from "@rneui/themed";
 import React, { useState } from "react";
 import {
@@ -18,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../lib/supabase";
+import { useNavigation } from '@react-navigation/native';
+
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -130,11 +130,19 @@ export default function Auth() {
               <Button
                 title="Continue with email"
                 buttonStyle={styles.modalButton}
+                onPress={() => {
+                  closeSignUpModal();
+                  useNavigation.navigate('Signup');
+                }}
               />
               <Button
                 title="Continue with phone"
                 buttonStyle={styles.modalSecondaryButton}
                 titleStyle={styles.modalSecondaryButtonText}
+                onPress={() => {
+                  closeSignUpModal();
+                  navigation.navigate('Signup');
+                }}
               />
               <Text style={styles.termsText}>
                 Terms & Conditions and Privacy Policy apply.
