@@ -15,7 +15,7 @@ import {
   Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -67,7 +67,7 @@ export default function Auth() {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <Image
-            source={require("../assets/images/logo.png")} // Replace with your logo path
+            source={require("../../assets/images/logo.png")} // Replace with your logo path
             style={styles.logo}
           />
           <Text style={styles.title}>Log in</Text>

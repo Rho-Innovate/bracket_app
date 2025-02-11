@@ -11,7 +11,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Session } from '@supabase/supabase-js'; // Supabase session for user authentication
 import React from 'react';
 import Account from './Account'; // Account screen component
-import Navigation from './Screens/Navigation'; // Home screen component
+import Navigation from '../Screens/Navigation'; // Home screen component
 
 // Define route parameters for the stack navigator
 export type RootStackParamList = {
