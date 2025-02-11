@@ -1,3 +1,5 @@
+//This is the first screen people see - sign in or sign up page
+
 import { Button, Input } from "@rneui/themed";
 import React, { useState } from "react";
 import {
