@@ -16,15 +16,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../lib/supabase";
-import { useNavigation } from '@react-navigation/native';
-
+import EmailSignup from './Signup';
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [modalAnimation] = useState(new Animated.Value(0)); 
+  const [modalAnimation] = useState(new Animated.Value(0));
+  const [showEmailSignup, setShowEmailSignup] = useState(false);
+ 
 
   async function signInWithEmail() {
     setLoading(true);
@@ -131,8 +132,16 @@ export default function Auth() {
                 title="Continue with email"
                 buttonStyle={styles.modalButton}
                 onPress={() => {
-                  closeSignUpModal();
-                  useNavigation.navigate('Signup');
+                  // First hide the sign up modal
+                  Animated.timing(modalAnimation, {
+                    toValue: 0,
+                    duration: 300,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                  }).start(() => {
+                    setShowSignUpModal(false);
+                    setShowEmailSignup(true);
+                  });
                 }}
               />
               <Button
@@ -141,7 +150,6 @@ export default function Auth() {
                 titleStyle={styles.modalSecondaryButtonText}
                 onPress={() => {
                   closeSignUpModal();
-                  navigation.navigate('Signup');
                 }}
               />
               <Text style={styles.termsText}>
@@ -150,6 +158,12 @@ export default function Auth() {
             </Animated.View>
           </View>
         </Modal>
+      )}
+      {showEmailSignup && (
+        <EmailSignup
+          visible={showEmailSignup}
+          onClose={() => setShowEmailSignup(false)}
+        />
       )}
     </SafeAreaView>
   );

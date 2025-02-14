@@ -25,7 +25,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 const Nav = ({ session }: { session: Session }) => {
   return (
-    <Stack.Navigator
+    <Stack.Navigator initialRouteName="Account"
       screenOptions={{
         headerShown: false, // Hide headers for a clean UI
       }}
@@ -36,12 +36,8 @@ const Nav = ({ session }: { session: Session }) => {
         component={Account}
         initialParams={{ session }} // Pass session data as initial params
       />
-
       {/* Home Screen */}
       <Stack.Screen name="Home" component={Navigation} />
-
-      {/* Signup Screen */}
-      <Stack.Screen name="Signup" component={Signup} />
     </Stack.Navigator>
   );
 };

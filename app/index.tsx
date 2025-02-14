@@ -2,9 +2,8 @@ import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Auth from '../components/login_signup/Auth';
-import Signup from '../components/login_signup/Signup';
 import { supabase } from '../lib/supabase';
-import Navigation from '../components/login_signup/Login Nav';
+import LoginNav from '../components/login_signup/Login Nav';
 import { NavigationIndependentTree } from '@react-navigation/native';
 
 export default function Page() {
@@ -23,7 +22,7 @@ export default function Page() {
   if (session && session.user) {
     return (
       <NavigationIndependentTree>
-        <Navigation session={session} />
+       <LoginNav session={session} />
       </NavigationIndependentTree>
     );
   }
