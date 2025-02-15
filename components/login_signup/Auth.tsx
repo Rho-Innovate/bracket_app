@@ -15,14 +15,17 @@ import {
   Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
+import EmailSignup from './Signup';
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [modalAnimation] = useState(new Animated.Value(0)); 
+  const [modalAnimation] = useState(new Animated.Value(0));
+  const [showEmailSignup, setShowEmailSignup] = useState(false);
+ 
 
   async function signInWithEmail() {
     setLoading(true);
@@ -66,7 +69,7 @@ export default function Auth() {
         style={styles.container}
       >
           <Image
-            source={require("./logo.png")} // Replace with your logo path
+            source={require("../../assets/images/logo.png")} // Replace with your logo path
             style={styles.logo}
           />
           <Text style={styles.title}>Sign in</Text>
@@ -126,11 +129,26 @@ export default function Auth() {
               <Button
                 title="Continue with email"
                 buttonStyle={styles.modalButton}
+                onPress={() => {
+                  // First hide the sign up modal
+                  Animated.timing(modalAnimation, {
+                    toValue: 0,
+                    duration: 300,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                  }).start(() => {
+                    setShowSignUpModal(false);
+                    setShowEmailSignup(true);
+                  });
+                }}
               />
               <Button
                 title="Continue with phone"
                 buttonStyle={styles.modalSecondaryButton}
                 titleStyle={styles.modalSecondaryButtonText}
+                onPress={() => {
+                  closeSignUpModal();
+                }}
               />
               <Text style={styles.termsText}>
                 Terms & Conditions and Privacy Policy apply.
@@ -138,6 +156,12 @@ export default function Auth() {
             </Animated.View>
           </View>
         </Modal>
+      )}
+      {showEmailSignup && (
+        <EmailSignup
+          visible={showEmailSignup}
+          onClose={() => setShowEmailSignup(false)}
+        />
       )}
     </SafeAreaView>
   );
