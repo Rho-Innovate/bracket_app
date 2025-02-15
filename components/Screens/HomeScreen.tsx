@@ -28,7 +28,12 @@ function HomeScreen() {
         const fetchedEvents = await searchGameRequests({
           status: 'Open',
           sort_by: 'recency',
-          sort_order: 'desc'
+          sort_order: 'desc',
+          location: {
+            lat: 0,
+            lng: 0
+          },
+          radius: 0
         });
 
         setEvents(fetchedEvents);
