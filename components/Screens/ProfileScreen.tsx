@@ -1,4 +1,4 @@
-import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
+import { createStackNavigator, StackNavigationProp, StackScreenProps } from '@react-navigation/stack';
 import { Session } from '@supabase/supabase-js';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ type ProfileStackParamList = {
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList>;
 
-const ProfileStack = createStackNavigator();
+const ProfileStack = createStackNavigator<ProfileStackParamList>();
 
 // Add this interface near the top of the file
 interface Profile {
@@ -383,12 +383,9 @@ function Onboarding({ navigation }: { navigation: ProfileScreenNavigationProp })
 }
 
 function OnboardingScreen2({ 
-  navigation, 
-  route 
-}: { 
-  navigation: ProfileScreenNavigationProp;
-  route: { params: { selectedSports: string[] } };
-}) {
+  navigation,
+  route
+}: StackScreenProps<ProfileStackParamList, 'OnboardingScreen2'>) {
   const [skillLevels, setSkillLevels] = useState<Record<string, string>>({});
   const levels = ['Beginner', 'Intermediate', 'Advanced'];
   const [loading, setLoading] = useState(false);

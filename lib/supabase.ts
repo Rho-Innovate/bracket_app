@@ -143,6 +143,11 @@ export const updateProfile = async (
     gender: string;
     location: { lat: number; lng: number };
     description: string;
+    sports_preferences: {
+      sport: string;
+      skill_level: string;
+      years_experience: number;
+    }[];
   }>
 ) => {
   const { location, ...rest } = profileData;
