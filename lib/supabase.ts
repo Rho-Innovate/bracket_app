@@ -353,7 +353,7 @@ interface GameRequest {
   current_players: number;
   distance: number; // This is added by the Postgres function
 }
-export const searchGameRequests = async (filters: {
+export const searchGameRequests_ = async (filters: {
   location: { lat: number; lng: number };
   radius: number;
   sport_id?: number;
@@ -403,6 +403,69 @@ export const searchGameRequests = async (filters: {
     }
 
     return gameRequests;
+  } catch (error) {
+    console.error('Unexpected error searching for game requests:', error);
+    throw error;
+  }
+};
+
+export const searchGameRequests = async (filters: {
+  location: { lat: number; lng: number };
+  square_radius: number; // Instead of circular radius, this defines the bounding box size
+  sport_id?: number;
+  requested_time_from?: string;
+  requested_time_to?: string;
+  status?: 'Open' | 'Closed';
+  sort_by?: 'recency' | 'max_players';
+  sort_order?: 'asc' | 'desc';
+}) => {
+  try {
+    // Calculate bounding box (square)
+    const lat_min = filters.location.lat - filters.square_radius;
+    const lat_max = filters.location.lat + filters.square_radius;
+    const lng_min = filters.location.lng - filters.square_radius;
+    const lng_max = filters.location.lng + filters.square_radius;
+
+    // Base query
+    let query = supabase.from('game_requests').select('*');
+
+    // Apply filters
+    if (filters.sport_id) {
+      query = query.eq('sport_id', filters.sport_id);
+    }
+    if (filters.requested_time_from) {
+      query = query.gte('requested_time', filters.requested_time_from);
+    }
+    if (filters.requested_time_to) {
+      query = query.lte('requested_time', filters.requested_time_to);
+    }
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    // Apply bounding box filter for location (square radius)
+    query = query
+      .gte('ST_Y(location)', lat_min) // Latitude >= lat_min
+      .lte('ST_Y(location)', lat_max) // Latitude <= lat_max
+      .gte('ST_X(location)', lng_min) // Longitude >= lng_min
+      .lte('ST_X(location)', lng_max); // Longitude <= lng_max
+
+    // Apply sorting
+    if (filters.sort_by === 'recency') {
+      query = query.order('requested_time', { ascending: filters.sort_order === 'asc' });
+    } else if (filters.sort_by === 'max_players') {
+      query = query.order('max_players', { ascending: filters.sort_order === 'asc' });
+    }
+
+    // Fetch data
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error searching for game requests:', error.message);
+      throw error;
+    }
+
+    return data;
   } catch (error) {
     console.error('Unexpected error searching for game requests:', error);
     throw error;
