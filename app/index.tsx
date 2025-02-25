@@ -5,6 +5,7 @@ import Auth from '../components/Auth';
 import { supabase } from '../lib/supabase';
 import Navigation from '../components/Login Nav';
 import { NavigationIndependentTree } from '@react-navigation/native';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
