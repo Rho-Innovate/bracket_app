@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { fetchOwnProfile, signOut, supabase, updateProfile, uploadAvatar } from '../../lib/supabase'; // <-- import from your supabase code
-
+//
 type ProfileStackParamList = {
   Profile: undefined;
   Onboarding: undefined;
