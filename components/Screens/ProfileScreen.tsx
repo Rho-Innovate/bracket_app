@@ -244,7 +244,14 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
   );
 
   const renderSportsPreferences = () => {
-    if (!profile?.sports_preferences?.length) return null;
+    if (!profile?.sports_preferences || !Array.isArray(profile.sports_preferences)) {
+      return (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>My Sports</Text>
+          <Text style={styles.description}>No sports preferences set</Text>
+        </View>
+      );
+    }
 
     return (
       <View style={styles.section}>
