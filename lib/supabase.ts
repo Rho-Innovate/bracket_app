@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createClient } from '@supabase/supabase-js'
+import { decode } from 'base64-arraybuffer'
 
 // Replace these with your actual Supabase URL and anon key from the Supabase dashboard
 const supabaseUrl = 'https://utreebqeudeznsggsbry.supabase.co'
@@ -141,6 +142,12 @@ export const updateProfile = async (
     age: number;
     gender: string;
     location: { lat: number; lng: number };
+    description: string;
+    sports_preferences: {
+      sport: string;
+      skill_level: string;
+      years_experience: number;
+    }[];
   }>
 ) => {
   const { location, ...rest } = profileData;
@@ -677,6 +684,48 @@ export const updateJoinRequestStatus = async (
     return { message: `Join request has been ${newStatus.toLowerCase()}` };
   } catch (error) {
     console.error('Unexpected error updating join request status:', error);
+    throw error;
+  }
+};
+
+// Add this new function to handle avatar uploads
+export const uploadAvatar = async (userId: string, base64Image: string) => {
+  try {
+    const filePath = `${userId}/avatar.jpg`;
+    
+    // Upload the image to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, decode(base64Image), {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get the public URL - Updated method
+    const { data: urlData } = await supabase.storage
+      .from('avatars')
+      .createSignedUrl(filePath, 31536000); // URL valid for 1 year
+
+    if (!urlData?.signedUrl) {
+      throw new Error('Failed to get signed URL');
+    }
+
+    const avatarUrl = urlData.signedUrl;
+    console.log('Generated signed URL:', avatarUrl);
+
+    // Update the profile with the new avatar URL
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', userId);
+
+    if (updateError) throw updateError;
+
+    return avatarUrl;
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
     throw error;
   }
 };
