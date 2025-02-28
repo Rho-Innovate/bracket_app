@@ -5,8 +5,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { getJoinRequests } from '../../lib/supabase';
+import { getJoinRequests, deleteJoinRequest } from '../../lib/supabase';
 
 interface JoinRequest {
   id: number;
@@ -19,21 +22,29 @@ interface JoinRequest {
 export default function ActiveGameJoinRequests() {
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadRequests = async () => {
+    try {
+      const data = await getJoinRequests({ user_id: 'your-user-id' }); //How do I get the user id??
+      setRequests(data);
+    } catch (error) {
+      console.error('Error:', error);
+      Alert.alert('Error', 'Failed to load requests');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const loadRequests = async () => {
-      try {
-        const data = await getJoinRequests({ user_id: 'your-user-id' });
-        setRequests(data);
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadRequests();
   }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    loadRequests();
+  };
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -57,11 +68,54 @@ export default function ActiveGameJoinRequests() {
     }
   };
 
+  const handleDeleteRequest = async (requestId: number) => {
+    try {
+      await deleteJoinRequest(requestId, 'your-user-id'); //How do I get the user Id???
+      setRequests(requests.filter(request => request.id !== requestId));
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      Alert.alert('Error', 'Failed to delete request');
+    }
+  };
+
+  const confirmDelete = (requestId: number) => {
+    Alert.alert(
+      'Delete Request',
+      'Are you sure you want to delete this request?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          onPress: () => handleDeleteRequest(requestId),
+          style: 'destructive'
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Active Game Join Requests</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Active Game Join Requests</Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={styles.refreshButton}
+            onPress={handleRefresh}
+            disabled={refreshing}
+          >
+            {refreshing ? (
+              <ActivityIndicator size="small" color="#2F622A" />
+            ) : (
+              <Text style={styles.refreshButtonText}>↻</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+      
       <ScrollView>
-        {requests.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
+        ) : requests.length === 0 ? (
           <View style={styles.grayBox}>
             <Text style={styles.boxText}>No active join requests</Text>
           </View>
@@ -78,6 +132,15 @@ export default function ActiveGameJoinRequests() {
               <Text style={styles.boxText}>
                 Requested: {new Date(request.requested_at).toLocaleDateString()}
               </Text>
+              
+              {request.status === 'Rejected' && (
+                <TouchableOpacity 
+                  style={styles.deleteButton}
+                  onPress={() => confirmDelete(request.id)}
+                >
+                  <Text style={styles.deleteButtonText}>Delete Request</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ))
         )}
@@ -92,12 +155,36 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
   },
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#2F622A',
     textAlign: 'center',
+    marginBottom: 10, // Add space between title and button
+  },
+  buttonContainer: {
+    alignItems: 'center',
+  },
+  refreshButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2F622A',
+  },
+  refreshButtonText: {
+    fontSize: 24, // Increased size
+    color: '#2F622A',
+  },
+  loader: {
+    marginTop: 20,
   },
   grayBox: {
     backgroundColor: '#f5f5f5',
@@ -128,5 +215,17 @@ const styles = StyleSheet.create({
   rejectedText: {
     color: '#d32f2f',
     fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#d32f2f',
+    padding: 8,
+    borderRadius: 5,
+    marginTop: 8,
+    alignSelf: 'flex-end',
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
