@@ -36,8 +36,9 @@ const Nav = ({ session }: { session: Session }) => {
         component={Account}
         initialParams={{ session }} // Pass session data as initial params
       />
-      {/* Home Screen */}
-      <Stack.Screen name="Home" component={Navigation} />
+      {/* Home Screen */} 
+      <Stack.Screen name="Home" component={Navigation} //If you want to see a page import the page and change Navigation to the assigned page
+      />
     </Stack.Navigator>
   );
 };
