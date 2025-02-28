@@ -55,8 +55,13 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
       if (signInError) throw signInError;
   
       Alert.alert('Success', 'Account created and logged in successfully!');
-    } catch (error) {
-      Alert.alert('Error');
+    } catch (error: any) {
+      console.error('Signup Error:', {
+        message: error.message,
+        details: error.details,
+        stack: error.stack
+      });
+      Alert.alert('Error', error.message || 'An error occurred during signup');
     }
   };
 
