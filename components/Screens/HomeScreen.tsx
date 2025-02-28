@@ -29,8 +29,8 @@ function HomeScreen() {
         sort_by: 'recency',
         sort_order: 'desc',
         location: {
-          lat: 0,
-          lng: 0
+          lat: 47.606209,
+          lng: 122.332069
         },
         radius: 0
       });
