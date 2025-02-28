@@ -12,7 +12,6 @@ import { Session } from '@supabase/supabase-js'; // Supabase session for user au
 import React from 'react';
 import Account from './Account'; // Account screen component
 import Navigation from '../Screens/Navigation'; // Home screen component
-import ActiveGameJoinRequests from '../Screens/ActiveGameJoinRequests';
 import Signup from './Signup';
 
 // Define route parameters for the stack navigator
@@ -37,8 +36,9 @@ const Nav = ({ session }: { session: Session }) => {
         component={Account}
         initialParams={{ session }} // Pass session data as initial params
       />
-      {/* Home Screen */}
-      <Stack.Screen name="Home" component={ActiveGameJoinRequests} />
+      {/* Home Screen */} 
+      <Stack.Screen name="Home" component={Navigation} //If you want to see a page import the page and change Navigation to the assigned page
+      />
     </Stack.Navigator>
   );
 };
