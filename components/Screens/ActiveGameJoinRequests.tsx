@@ -9,6 +9,8 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Session } from '@supabase/supabase-js'; // Supabase session for user authentication
+import { supabase } from '../../lib/supabase';
 import { getJoinRequests, deleteJoinRequest } from '../../lib/supabase';
 
 interface JoinRequest {
@@ -23,10 +25,26 @@ export default function ActiveGameJoinRequests() {
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session || null);
+    });
+  }, []);
+
+  // Load requests when we have a session
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    loadRequests();
+  }, [session]);
+
 
   const loadRequests = async () => {
+    if (!session?.user?.id) return;
+    
     try {
-      const data = await getJoinRequests({ user_id: 'your-user-id' }); //How do I get the user id??
+      const data = await getJoinRequests({ user_id: session.user.id });
       setRequests(data);
     } catch (error) {
       console.error('Error:', error);
@@ -69,8 +87,10 @@ export default function ActiveGameJoinRequests() {
   };
 
   const handleDeleteRequest = async (requestId: number) => {
+    if (!session?.user?.id) return;
+
     try {
-      await deleteJoinRequest(requestId, 'your-user-id'); //How do I get the user Id???
+      await deleteJoinRequest(requestId, session.user.id);
       setRequests(requests.filter(request => request.id !== requestId));
     } catch (error) {
       console.error('Error deleting request:', error);
