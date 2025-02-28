@@ -2,6 +2,7 @@ import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Auth from '../components/login_signup/Auth';
+import ActiveGameJoinRequests from '../components/Screens/ActiveGameJoinRequests';
 import { supabase } from '../lib/supabase';
 import LoginNav from '../components/login_signup/Login Nav';
 import { NavigationIndependentTree } from '@react-navigation/native';
