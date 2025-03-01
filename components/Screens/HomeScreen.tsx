@@ -1,10 +1,10 @@
 import { joinGameRequest, searchGameRequests } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
-
+import { Text as Quicksand } from '../text';
 
 const GrayBG = { uri: 'https://digitalassets.daltile.com/content/dam/AmericanOlean/AO_ImageFiles/minimum/AO_MN44_12x24_Gray_Matte.jpg/jcr:content/renditions/cq5dam.web.570.570.jpeg' };
 
@@ -81,7 +81,7 @@ function HomeScreen() {
           style={styles.myEventsButton}
           onPress={() => setIsModalVisible(true)}
         >
-          <Text style={styles.myEventsButtonText}>My Events</Text>
+          <Quicksand style={styles.myEventsButtonText}>My Events</Quicksand>
         </TouchableOpacity>
         <TextInput 
           style={styles.searchBar} 
@@ -99,12 +99,12 @@ function HomeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>My Events</Text>
+              <Quicksand style={styles.modalTitle}>My Events</Quicksand>
               <TouchableOpacity 
                 onPress={() => setIsModalVisible(false)}
                 style={styles.closeButton}
               >
-                <Text style={styles.closeButtonText}>×</Text>
+                <Quicksand style={styles.closeButtonText}>×</Quicksand>
               </TouchableOpacity>
             </View>
             <ActiveGameJoinRequests />
@@ -122,7 +122,7 @@ function HomeScreen() {
             {loading ? (
               <ActivityIndicator size="small" color="#2F622A" />
             ) : (
-              <Text style={styles.refreshButtonText}>↻</Text>
+              <Quicksand style={styles.refreshButtonText}>↻</Quicksand>
             )}
           </TouchableOpacity>
         </View>
@@ -138,21 +138,21 @@ function HomeScreen() {
                 onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
               >
                 <View style={styles.eventHeader}>
-                  <Text style={styles.sportTag}>
+                  <Quicksand style={styles.sportTag}>
                     {sportIdToName[event.sport_id] || 'Sport'}
-                  </Text>
-                  <Text style={styles.playerCount}>
+                  </Quicksand>
+                  <Quicksand style={styles.playerCount}>
                     {event.current_players}/{event.max_players} players
-                  </Text>
+                  </Quicksand>
                 </View>
 
-                <Text style={styles.eventTitle}>
+                <Quicksand style={styles.eventTitle}>
                   {event.description || 'No description available'}
-                </Text>
+                </Quicksand>
                 
-                <Text style={styles.eventDate}>
+                <Quicksand style={styles.eventDate}>
                   {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
-                </Text>
+                </Quicksand>
 
                 {expandedEvent === event.id && (
                   <View style={styles.expandedContent}>
@@ -165,13 +165,13 @@ function HomeScreen() {
                       onPress={() => handleJoinEvent(event.id)}
                       disabled={joining[event.id] || event.current_players >= event.max_players}
                     >
-                      <Text style={styles.joinButtonText}>
+                      <Quicksand style={styles.joinButtonText}>
                         {event.current_players >= event.max_players 
                           ? 'Full' 
                           : joining[event.id] 
                             ? 'Joining...' 
                             : 'Join Event'}
-                      </Text>
+                      </Quicksand>
                     </TouchableOpacity>
                   </View>
                 )}

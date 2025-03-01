@@ -39,26 +39,25 @@ export default function Navigation() {
         }}
       />
       <Tab.Screen
-        name="Create Event"
-        component={EventCreationPage}
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "add-circle" : "add-circle-outline"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-
-      <Tab.Screen
         name="Friends"
         component={FriendsScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "people-sharp" : "people-outline"}
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+            <Tab.Screen
+        name="Create Event"
+        component={EventCreationPage}
+        options={{
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "add-circle" : "add-circle-outline"}
               size={24}
               color={color}
             />
