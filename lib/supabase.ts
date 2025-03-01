@@ -416,9 +416,10 @@ export const searchGameRequests_ = async (filters: {
   }
 };
 
-export const searchGameRequests = async (filters: {
-  location: { lat: number; lng: number };
-  square_radius: number; // Instead of circular radius, this defines the bounding box size
+export const getGameRequests = async (filters: {
+  location?: { lat: number; lng: number };
+  creator_id?: string;
+  square_radius?: number; // Instead of circular radius, this defines the bounding box size
   sport_id?: number;
   requested_time_from?: string;
   requested_time_to?: string;
@@ -428,15 +429,14 @@ export const searchGameRequests = async (filters: {
 }) => {
   try {
     // Calculate bounding box (square)
-    const lat_min = filters.location.lat - filters.square_radius;
-    const lat_max = filters.location.lat + filters.square_radius;
-    const lng_min = filters.location.lng - filters.square_radius;
-    const lng_max = filters.location.lng + filters.square_radius;
-
+    
     // Base query
     let query = supabase.from('game_requests').select('*');
 
     // Apply filters
+    if(filters.creator_id) {
+      query = query.eq('creator_id', filters.creator_id)
+    }
     if (filters.sport_id) {
       query = query.eq('sport_id', filters.sport_id);
     }
@@ -451,12 +451,18 @@ export const searchGameRequests = async (filters: {
     }
 
     // Apply bounding box filter for location (square radius)
-    query = query
-      .gte('ST_Y(location)', lat_min) // Latitude >= lat_min
-      .lte('ST_Y(location)', lat_max) // Latitude <= lat_max
-      .gte('ST_X(location)', lng_min) // Longitude >= lng_min
-      .lte('ST_X(location)', lng_max); // Longitude <= lng_max
+    if (filters.square_radius && filters.location){
+      const lat_min = filters.location.lat - filters.square_radius;
+      const lat_max = filters.location.lat + filters.square_radius;
+      const lng_min = filters.location.lng - filters.square_radius;
+      const lng_max = filters.location.lng + filters.square_radius;
 
+      query = query
+        .gte('ST_Y(location)', lat_min) // Latitude >= lat_min
+        .lte('ST_Y(location)', lat_max) // Latitude <= lat_max
+        .gte('ST_X(location)', lng_min) // Longitude >= lng_min
+        .lte('ST_X(location)', lng_max); // Longitude <= lng_max
+    }
     // Apply sorting
     if (filters.sort_by === 'recency') {
       query = query.order('requested_time', { ascending: filters.sort_order === 'asc' });
@@ -609,13 +615,14 @@ export const createJoinRequest = async (gameRequestId: number, userId: string) =
 /**
  * Retrieve join requests with optional filters.
  */
-export const getJoinRequests = async (p0: null, hostUserId: string, filters: { game_request_id?: number; user_id?: string} ) => {
+export const getJoinRequests = async (p0: null, hostUserId: string, filters: { game_request_ids?: number[]; user_id?: string} ) => {
   try {
     let query = supabase.from('join_requests').select('*');
-    query = query.eq('user_id', hostUserId)
+    //query = query.eq('user_id', hostUserId)
 
-    if (filters.game_request_id) {
-      query = query.eq('game_request_id', filters.game_request_id);
+
+    if (filters.game_request_ids && filters.game_request_ids.length > 0) {
+      query = query.in('game_request_id', filters.game_request_ids);
     }
 
     if (filters.user_id) {
