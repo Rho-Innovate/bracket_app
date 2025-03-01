@@ -3,7 +3,7 @@ import { StackNavigationProp } from '@react-navigation/stack'
 import { Button, Input } from '@rneui/themed'
 import { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
-import { updateProfile, fetchOwnProfile, supabase } from '../lib/supabase'
+import { supabase, updateProfile, fetchOwnProfile } from '../../lib/supabase'
 import Avatar from './Avatar'
 import { NavigationProp, RootStackParamList } from './Login Nav'
 

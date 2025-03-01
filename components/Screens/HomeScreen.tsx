@@ -22,25 +22,34 @@ function HomeScreen() {
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null); // Track expanded event
   const [joining, setJoining] = useState<{ [key: number]: boolean }>({}); // Track joining state
 
+  const fetchEvents = async () => {
+    try {
+      const fetchedEvents = await searchGameRequests({
+        status: 'Open',
+        sort_by: 'recency',
+        sort_order: 'desc',
+        location: {
+          lat: 47.606209,
+          lng: 122.332069
+        },
+        radius: 0
+      });
+
+      setEvents(fetchedEvents);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const fetchedEvents = await searchGameRequests({
-          status: 'Open',
-          sort_by: 'recency',
-          sort_order: 'desc'
-        });
-
-        setEvents(fetchedEvents);
-      } catch (error) {
-        console.error('Error fetching events:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEvents();
   }, []);
+
+  const handleRefresh = () => {
+    fetchEvents();   // Fetch with refresh flag
+  };
 
   // Function to handle joining an event
   const handleJoinEvent = async (eventId: number) => {
@@ -71,6 +80,17 @@ function HomeScreen() {
               <Text style={styles.buttonText}>{label}</Text>
             </TouchableOpacity>
           ))}
+          <TouchableOpacity 
+            style={[styles.button, styles.refreshButton]} 
+            onPress={handleRefresh}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#2F622A" />
+            ) : (
+              <Text style={[styles.buttonText, styles.refreshButtonText]}>↻</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {loading ? (
@@ -119,6 +139,16 @@ function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  refreshButton: {
+    width: 32,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  refreshButtonText: {
+    color: '#2F622A',
+    fontSize: 16,
+  },
   dropdown: {
     marginTop: 10,
     padding: 10,
@@ -168,7 +198,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    marginTop: 40,
+    marginTop: 60,
     marginBottom: 16,
     marginLeft: 35,
   },

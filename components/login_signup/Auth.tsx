@@ -15,14 +15,17 @@ import {
   Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../../lib/supabase";
+import EmailSignup from './Signup';
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [modalAnimation] = useState(new Animated.Value(0)); 
+  const [modalAnimation] = useState(new Animated.Value(0));
+  const [showEmailSignup, setShowEmailSignup] = useState(false);
+ 
 
   async function signInWithEmail() {
     setLoading(true);
@@ -65,48 +68,46 @@ export default function Auth() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
           <Image
-            source={require("./logo.png")} // Replace with your logo path
+            source={require("../../assets/images/logo.png")} // Replace with your logo path
             style={styles.logo}
           />
-          <Text style={styles.title}>Log in</Text>
+          <Text style={styles.title}>Sign in</Text>
           <View style={styles.inputContainer}>
-            <Input
-              label="Email"
-              labelStyle={styles.inputLabel}
-              inputStyle={styles.inputField}
-              inputContainerStyle={styles.inputContainerStyle}
-              onChangeText={setEmail}
-              value={email}
-              placeholder="email@address.com"
-              autoCapitalize={"none"}
-            />
-            <Input
-              label="Password"
-              labelStyle={styles.inputLabel}
-              inputStyle={styles.inputField}
-              inputContainerStyle={styles.inputContainerStyle}
-              onChangeText={(text) => setPassword(text)}
-              value={password}
-              secureTextEntry={true}
-              placeholder="Password"
-              autoCapitalize={"none"}
-            />
-          </View>
-          <Button
-            title="Log in"
-            buttonStyle={styles.loginButton}
-            titleStyle={styles.loginButtonText}
-            disabled={loading}
-            onPress={signInWithEmail}
-          />
-          <TouchableOpacity onPress={openSignUpModal} style={styles.signUpContainer}>
+  <View style={styles.fieldsContainer}>
+    <Input
+      labelStyle={styles.inputLabel}
+      inputStyle={styles.inputField}
+      inputContainerStyle={styles.roundedInputContainer}
+      onChangeText={setEmail}
+      value={email}
+      placeholder="Email"
+      autoCapitalize={"none"}
+    />
+    <Input
+      labelStyle={styles.inputLabel}
+      inputStyle={styles.inputField}
+      inputContainerStyle={styles.roundedInputContainer}
+      onChangeText={(text) => setPassword(text)}
+      value={password}
+      secureTextEntry={true}
+      placeholder="Password"
+      autoCapitalize={"none"}
+    />
+  </View>
+  <Button
+    title="Log in"
+    buttonStyle={styles.loginButton}
+    titleStyle={styles.loginButtonText}
+    disabled={loading}
+    onPress={signInWithEmail}
+  />
+</View>
+   <TouchableOpacity onPress={openSignUpModal} style={styles.signUpContainer}>
             <Text style={styles.signupText}>
               Don’t have an account? <Text style={styles.signupLink}>Sign up!</Text>
             </Text>
           </TouchableOpacity>
-        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Sign-Up Modal */}
@@ -128,11 +129,26 @@ export default function Auth() {
               <Button
                 title="Continue with email"
                 buttonStyle={styles.modalButton}
+                onPress={() => {
+                  // First hide the sign up modal
+                  Animated.timing(modalAnimation, {
+                    toValue: 0,
+                    duration: 300,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                  }).start(() => {
+                    setShowSignUpModal(false);
+                    setShowEmailSignup(true);
+                  });
+                }}
               />
               <Button
                 title="Continue with phone"
                 buttonStyle={styles.modalSecondaryButton}
                 titleStyle={styles.modalSecondaryButtonText}
+                onPress={() => {
+                  closeSignUpModal();
+                }}
               />
               <Text style={styles.termsText}>
                 Terms & Conditions and Privacy Policy apply.
@@ -140,6 +156,12 @@ export default function Auth() {
             </Animated.View>
           </View>
         </Modal>
+      )}
+      {showEmailSignup && (
+        <EmailSignup
+          visible={showEmailSignup}
+          onClose={() => setShowEmailSignup(false)}
+        />
       )}
     </SafeAreaView>
   );
@@ -152,28 +174,26 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "flex-start",
-    padding: 16,
   },
   logo: {
     width: 100,
     height: 100,
     marginBottom: 20,
-    alignSelf: "flex-start",
+    alignSelf: "center",
   },
   title: {
     fontSize: 28,
     fontWeight: "600",
     marginBottom: 40,
-    alignSelf: "flex-start",
+    alignSelf: "center",
   },
   inputContainer: {
     width: "100%",
     marginBottom: 20,
+    padding: 10,
+    alignItems: "center",
   },
   inputLabel: {
     fontSize: 16,
@@ -184,10 +204,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "left",
   },
-  inputContainerStyle: {
+  inputContainerStyle: { //??
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
-    alignSelf: "stretch",
   },
   loginButton: {
     backgroundColor: "#2F622A",
@@ -202,7 +221,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   signUpContainer: {
-    alignSelf: "flex-start",
+    alignSelf: "center",
     marginTop: 20,
   },
   signupText: {
@@ -262,5 +281,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     textAlign: "center",
+  },
+  roundedInputContainer: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 8,
+    width: '100%',
+  },
+  fieldsContainer: {
+    width: '92%',
+    alignItems: "center",
   },
 });
