@@ -1,158 +1,225 @@
 import { joinGameRequest, searchGameRequests } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing } from 'react-native';
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
+import { Text as Text } from '../text';
 
-
-const GrayBG = { uri: 'https://digitalassets.daltile.com/content/dam/AmericanOlean/AO_ImageFiles/minimum/AO_MN44_12x24_Gray_Matte.jpg/jcr:content/renditions/cq5dam.web.570.570.jpeg' };
-
-// Update the sport mapping code
 const sportIdToName: Record<number, string> = {
   1: 'Tennis',
   2: 'Basketball',
   3: 'Soccer'
 };
 
-// Helper function to format date
 function formatDate(dateString: string) {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 }
 
 function HomeScreen() {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
-  const [joining, setJoining] = useState<{ [key: number]: boolean }>({});
-  const [isModalVisible, setIsModalVisible] = useState(false);
+const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+const [events, setEvents] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
+const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
+const [joining, setJoining] = useState<{ [key: number]: boolean }>({});
+const [isModalVisible, setIsModalVisible] = useState(false);
+const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchEvents = async () => {
-    try {
-      const fetchedEvents = await searchGameRequests({
-        status: 'Open',
-        sort_by: 'recency',
-        sort_order: 'desc',
-        location: {
-          lat: 47.606209,
-          lng: 122.332069
-        },
-        radius: 0
-      });
+const fetchEvents = async () => {
+  try {
+    const fetchedEvents = await searchGameRequests({
+      status: 'Open',
+      sort_by: 'recency',
+      sort_order: 'desc',
+      location: {
+        lat: 47.606209,
+        lng: 122.332069
+      },
+      radius: 0
+    });
 
-      setEvents(fetchedEvents);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setEvents(fetchedEvents);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+useEffect(() => {
+  fetchEvents();
+}, []);
 
-  const handleRefresh = () => {
-    fetchEvents();   // Fetch with refresh flag
-  };
+const handleRefresh = () => {
+  fetchEvents();
+};
 
-  // Function to handle joining an event
-  const handleJoinEvent = async (eventId: number) => {
-    try {
-      setJoining((prev) => ({ ...prev, [eventId]: true }));
+const handleJoinEvent = async (eventId: number) => {
+  try {
+    setJoining((prev) => ({ ...prev, [eventId]: true }));
 
-      const updatedEvent = await joinGameRequest(eventId);
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => (event.id === eventId ? updatedEvent : event))
-      );
-    } catch (error) {
-      console.error('Error joining event:', error);
-    } finally {
-      setJoining((prev) => ({ ...prev, [eventId]: false }));
-    }
-  };
+    const updatedEvent = await joinGameRequest(eventId);
+    setEvents((prevEvents) =>
+      prevEvents.map((event) => (event.id === eventId ? updatedEvent : event))
+    );
+  } catch (error) {
+    console.error('Error joining event:', error);
+  } finally {
+    setJoining((prev) => ({ ...prev, [eventId]: false }));
+  }
+};
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.myEventsButton}
-          onPress={() => setIsModalVisible(true)}
-        >
-          <Text style={styles.myEventsButtonText}>My Events</Text>
-        </TouchableOpacity>
-        <TextInput 
-          style={styles.searchBar} 
-          placeholder="Search events..." 
-          placeholderTextColor="#64748B" 
-        />
-      </View>
+const filteredEvents = events.filter(event =>
+  event.description.toLowerCase().includes(searchQuery.toLowerCase())
+);
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setIsModalVisible(false)}
+const opacity = useRef(new Animated.Value(0)).current;
+const translateY = useRef(new Animated.Value(100)).current;
+
+const fadeIn = () => {
+  opacity.setValue(0);
+  translateY.setValue(5000);
+  Animated.parallel([
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 300,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }),
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }),
+  ]).start();
+
+};
+
+const fadeOut = () => {
+  Animated.parallel([
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 300,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }),
+    Animated.timing(translateY, {
+      toValue: 5000,
+      duration: 300,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }),
+  ]).start(() => {
+    setIsModalVisible(false);
+  });
+};
+
+const animatedOverlayStyle = {
+  opacity: opacity,
+};
+
+const animatedContentStyle = {
+  transform: [{ translateY: translateY }],
+};
+
+useEffect(() => {
+  if (isModalVisible) {
+    fadeIn();
+  }
+}, [isModalVisible]);
+
+return (
+<View style={styles.container}>
+  <View style={styles.header}>
+    <View style={styles.searchContainer}>
+      <TextInput 
+        style={styles.searchBar} 
+        placeholder="Search events..." 
+        placeholderTextColor="#64748B" 
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        autoCorrect={false}
+        autoCapitalize="none"
+      />
+      <TouchableOpacity 
+        style={styles.refreshButton} 
+        onPress={handleRefresh}
+        disabled={loading}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>My Events</Text>
-              <TouchableOpacity 
-                onPress={() => setIsModalVisible(false)}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeButtonText}>×</Text>
-              </TouchableOpacity>
-            </View>
-            <ActiveGameJoinRequests />
-          </View>
-        </View>
-      </Modal>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.topBar}>
-          <TouchableOpacity 
-            style={[styles.refreshButton]} 
-            onPress={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#2F622A" />
-            ) : (
-              <Text style={styles.refreshButtonText}>↻</Text>
-            )}
+        {loading ? (
+          <ActivityIndicator size="small" color="#2F622A" />
+        ) : (
+          <Text style={styles.refreshButtonText}>⟳</Text>
+        )}
+      </TouchableOpacity>
+    </View>
+    <TouchableOpacity 
+      style={styles.myEventsButton}
+      onPress={() => setIsModalVisible(true)}
+    >
+      <Text style={styles.myEventsButtonText}>My Events</Text>
+    </TouchableOpacity>
+  </View>
+  <Modal
+    animationType="none"
+    transparent={true}
+    visible={isModalVisible}
+    onRequestClose={fadeOut}
+  >
+    <Animated.View style={[styles.modalOverlay, animatedOverlayStyle]}>
+      <Animated.View style={[styles.modalContent, animatedContentStyle]}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>My Events</Text>
+          <TouchableOpacity onPress={fadeOut}>
+            <Text style={styles.closeButtonText}>×</Text>
           </TouchableOpacity>
         </View>
+        <ActiveGameJoinRequests />
+      </Animated.View>
+    </Animated.View>
+  </Modal>
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
-        ) : (
-          <View style={styles.eventsContainer}>
-            {events.map((event, index) => (
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
+      ) : (
+        <View style={styles.eventsContainer}>
+          {filteredEvents.map((event, index) => (
+            <View key={index}>
               <TouchableOpacity 
-                key={index} 
                 style={styles.eventCard}
                 onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                activeOpacity={1}
               >
+                <View style={styles.eventContent}>
+                  <View style={styles.leftContainer}>
+                    <Text style={styles.eventTitle}>
+                      {event.description || 'No description provided'}
+                    </Text>
+                    <Text style={styles.eventDate}>
+                      {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
+                    </Text>
+                    <Text style={styles.hostName}>Player</Text>
+                  </View>
+                  
+                  <View style={styles.rightContainer}>
+                    <Image
+                      style={styles.profilePicture}
+                      source={require("../../assets/images/default-avatar.jpg")}
+                    />
+                  </View>
+                </View>
+
                 <View style={styles.eventHeader}>
                   <Text style={styles.sportTag}>
                     {sportIdToName[event.sport_id] || 'Sport'}
                   </Text>
                   <Text style={styles.playerCount}>
-                    {event.current_players}/{event.max_players} players
+                    {event.current_players}/{event.max_players}
                   </Text>
                 </View>
-
-                <Text style={styles.eventTitle}>
-                  {event.description || 'No description available'}
-                </Text>
-                
-                <Text style={styles.eventDate}>
-                  {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
-                </Text>
 
                 {expandedEvent === event.id && (
                   <View style={styles.expandedContent}>
@@ -176,45 +243,71 @@ function HomeScreen() {
                   </View>
                 )}
               </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </View>
+              {index < filteredEvents.length - 1 && (
+                <View style={styles.separator} />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+    </ScrollView>
+  </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: '#FFF',
   },
   header: {
+    paddingHorizontal: 28,
     paddingTop: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
   myEventsButton: {
-    backgroundColor: '#2F622A',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    alignItems: 'center',
+    backgroundColor: '#274b0d',
+    paddingHorizontal: 20,
+    // paddingVertical: 16,
+    height: 50,
+    borderRadius: 999,
+    position: 'absolute',
+    justifyContent: 'center',
+    bottom: '-1400%',
+    zIndex: 1,
+    alignSelf: 'center',
   },
   myEventsButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    color: '000',
+    zIndex: 1,
+  },
   searchBar: {
-    height: 40,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    height: 50,
+    flex: 1,
+    borderRadius: 999,
+    borderColor: '#E5E5E5',
+    borderWidth: 2,
     paddingHorizontal: 16,
-    marginBottom: 8,
-    fontSize: 16,
+    paddingVertical: 12,
+    // marginBottom: 16,
+    fontSize: 14,
+    letterSpacing: -0.4,
+    fontFamily: 'Montserrat',
+    fontWeight: '500',
+    color: '#000',
+    backgroundColor: '#fff',
   },
   scrollContent: {
     paddingBottom: 20,
@@ -225,78 +318,77 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    paddingLeft: 4,
+    paddingTop: 4,
+    marginLeft: 16,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: 'rgba(39, 75, 13, 0.28)',
+    borderWidth: 2,
   },
   refreshButtonText: {
-    color: '#2F622A',
-    fontSize: 20,
+    color: 'fff',
+    fontSize: 32,
   },
   loader: {
     marginTop: 40,
   },
   eventsContainer: {
-    paddingHorizontal: 16,
+    marginTop: 56,
+    // paddingHorizontal: 28,
   },
   eventCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    // borderRadius: 28,
+    padding: 28,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   eventHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
   },
   sportTag: {
-    backgroundColor: '#E8F5E9',
-    color: '#2F622A',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-    fontSize: 12,
+    backgroundColor: 'rgba(39, 75, 13, 0.04)',
+    color: 'rgba(39, 75, 13, 1)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    fontSize: 10,
     fontWeight: '600',
   },
   playerCount: {
-    color: '#666',
+    color: 'rgba(0, 0, 0, 0.64)',
     fontSize: 14,
+    fontWeight: '600',
   },
   eventTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   eventDate: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
+    color: 'rgba(0, 0, 0, 0.48)',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   expandedContent: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
+    paddingTop: 36,
     borderTopColor: '#E5E5E5',
   },
   joinButton: {
     backgroundColor: '#2F622A',
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 28,
     alignItems: 'center',
   },
   disabledButton: {
@@ -304,8 +396,8 @@ const styles = StyleSheet.create({
   },
   joinButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
@@ -314,28 +406,52 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    height: '90%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    height: '86%',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 28,
+    paddingTop: 12,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2F622A',
-  },
-  closeButton: {
-    padding: 10,
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(39, 75, 13, 1)',
   },
   closeButtonText: {
-    fontSize: 24,
+    fontSize: 40,
     color: '#666',
+  },
+  profilePicture: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  hostName: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(0, 0, 0, 0.48)',
+    marginBottom: 24,
+  },
+  eventContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  leftContainer: {
+    flex: 1,
+  },
+  rightContainer: {
+    alignSelf: 'flex-start',
+  },
+  separator: {
+    height: 2,
+    backgroundColor: '#E5E5E5',
+    width: '100%',
   },
 });
 
