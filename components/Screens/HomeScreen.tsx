@@ -78,133 +78,133 @@ function HomeScreen() {
     event.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
-  <View style={styles.container}>
-    <View style={styles.header}>
-      <View style={styles.searchContainer}>
-        <TextInput 
-          style={styles.searchBar} 
-          placeholder="Search events..." 
-          placeholderTextColor="#64748B" 
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCorrect={false}
-          autoCapitalize="none"
-        />
-        <TouchableOpacity 
-          style={styles.refreshButton} 
-          onPress={handleRefresh}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#2F622A" />
-          ) : (
-            <Text style={styles.refreshButtonText}>⟳</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+return (
+<View style={styles.container}>
+  <View style={styles.header}>
+    <View style={styles.searchContainer}>
+      <TextInput 
+        style={styles.searchBar} 
+        placeholder="Search events..." 
+        placeholderTextColor="#64748B" 
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        autoCorrect={false}
+        autoCapitalize="none"
+      />
       <TouchableOpacity 
-        style={styles.myEventsButton}
-        onPress={() => setIsModalVisible(true)}
+        style={styles.refreshButton} 
+        onPress={handleRefresh}
+        disabled={loading}
       >
-        <Text style={styles.myEventsButtonText}>My Events</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#2F622A" />
+        ) : (
+          <Text style={styles.refreshButtonText}>⟳</Text>
+        )}
       </TouchableOpacity>
     </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>My Events</Text>
-              <TouchableOpacity 
-                onPress={() => setIsModalVisible(false)}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeButtonText}>×</Text>
-              </TouchableOpacity>
-            </View>
-            <ActiveGameJoinRequests />
+    <TouchableOpacity 
+      style={styles.myEventsButton}
+      onPress={() => setIsModalVisible(true)}
+    >
+      <Text style={styles.myEventsButtonText}>My Events</Text>
+    </TouchableOpacity>
+  </View>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isModalVisible}
+      onRequestClose={() => setIsModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>My Events</Text>
+            <TouchableOpacity 
+              onPress={() => setIsModalVisible(false)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>×</Text>
+            </TouchableOpacity>
           </View>
+          <ActiveGameJoinRequests />
         </View>
-      </Modal>
+      </View>
+    </Modal>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
-        ) : (
-          <View style={styles.eventsContainer}>
-            {filteredEvents.map((event, index) => (
-              <View key={index}>
-                <TouchableOpacity 
-                  style={styles.eventCard}
-                  onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
-                  activeOpacity={1} // Prevents opacity change on press
-                >
-                  <View style={styles.eventContent}>
-                    {/* Left Container */}
-                    <View style={styles.leftContainer}>
-                      <Text style={styles.eventTitle}>
-                        {event.description || 'No description provided'}
-                      </Text>
-                      <Text style={styles.eventDate}>
-                        {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
-                      </Text>
-                      <Text style={styles.hostName}>Player</Text>
-                    </View>
-                    
-                    {/* Right Container */}
-                    <View style={styles.rightContainer}>
-                      <Image
-                        style={styles.profilePicture}
-                        source={require("../../assets/images/default-avatar.jpg")}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.eventHeader}>
-                    <Text style={styles.sportTag}>
-                      {sportIdToName[event.sport_id] || 'Sport'}
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
+      ) : (
+        <View style={styles.eventsContainer}>
+          {filteredEvents.map((event, index) => (
+            <View key={index}>
+              <TouchableOpacity 
+                style={styles.eventCard}
+                onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                activeOpacity={1} // Prevents opacity change on press
+              >
+                <View style={styles.eventContent}>
+                  {/* Left Container */}
+                  <View style={styles.leftContainer}>
+                    <Text style={styles.eventTitle}>
+                      {event.description || 'No description provided'}
                     </Text>
-                    <Text style={styles.playerCount}>
-                      {event.current_players}/{event.max_players}
+                    <Text style={styles.eventDate}>
+                      {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
                     </Text>
+                    <Text style={styles.hostName}>Player</Text>
                   </View>
+                  
+                  {/* Right Container */}
+                  <View style={styles.rightContainer}>
+                    <Image
+                      style={styles.profilePicture}
+                      source={require("../../assets/images/default-avatar.jpg")}
+                    />
+                  </View>
+                </View>
 
-                  {expandedEvent === event.id && (
-                    <View style={styles.expandedContent}>
-                      <TouchableOpacity
-                        style={[
-                          styles.joinButton,
-                          (joining[event.id] || event.current_players >= event.max_players) && 
-                          styles.disabledButton
-                        ]}
-                        onPress={() => handleJoinEvent(event.id)}
-                        disabled={joining[event.id] || event.current_players >= event.max_players}
-                      >
-                        <Text style={styles.joinButtonText}>
-                          {event.current_players >= event.max_players 
-                            ? 'Full' 
-                            : joining[event.id] 
-                              ? 'Joining...' 
-                              : 'Join Event'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </TouchableOpacity>
-                {index < filteredEvents.length - 1 && (
-                  <View style={styles.separator} />
+                <View style={styles.eventHeader}>
+                  <Text style={styles.sportTag}>
+                    {sportIdToName[event.sport_id] || 'Sport'}
+                  </Text>
+                  <Text style={styles.playerCount}>
+                    {event.current_players}/{event.max_players}
+                  </Text>
+                </View>
+
+                {expandedEvent === event.id && (
+                  <View style={styles.expandedContent}>
+                    <TouchableOpacity
+                      style={[
+                        styles.joinButton,
+                        (joining[event.id] || event.current_players >= event.max_players) && 
+                        styles.disabledButton
+                      ]}
+                      onPress={() => handleJoinEvent(event.id)}
+                      disabled={joining[event.id] || event.current_players >= event.max_players}
+                    >
+                      <Text style={styles.joinButtonText}>
+                        {event.current_players >= event.max_players 
+                          ? 'Full' 
+                          : joining[event.id] 
+                            ? 'Joining...' 
+                            : 'Join Event'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
-              </View>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    </View>
+              </TouchableOpacity>
+              {index < filteredEvents.length - 1 && (
+                <View style={styles.separator} />
+              )}
+            </View>
+          ))}
+        </View>
+      )}
+    </ScrollView>
+  </View>
   );
 }
 
@@ -216,7 +216,12 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 28,
     paddingTop: 8,
-    marginBottom: 16,
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
   myEventsButton: {
     backgroundColor: '#274b0d',
@@ -238,6 +243,8 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    color: '000',
+    zIndex: 1,
   },
   searchBar: {
     height: 50, // Increased height
@@ -253,6 +260,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat',
     fontWeight: '500',
     color: '#000',
+    backgroundColor: '#fff',
   },
   scrollContent: {
     paddingBottom: 20,
@@ -283,12 +291,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   eventsContainer: {
-    marginTop: 4,
+    marginTop: 56,
     // paddingHorizontal: 28,
   },
   eventCard: {
     backgroundColor: '#fff',
-    borderRadius: 28,
+    // borderRadius: 28,
     padding: 28,
     // shadowColor: '#000',
     // shadowOffset: { width: 0, height: 2 },
@@ -319,13 +327,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   eventDate: {
     fontSize: 12,
     color: 'rgba(0, 0, 0, 0.48)',
     fontWeight: '600',
-    // marginBottom: 4,
+    marginBottom: 4,
   },
   expandedContent: {
     paddingTop: 36,
@@ -389,7 +397,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: 'rgba(0, 0, 0, 0.48)',
-    marginBottom: 12,
+    marginBottom: 24,
   },
   eventContent: {
     flexDirection: 'row',
