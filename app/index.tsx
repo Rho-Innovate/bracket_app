@@ -10,6 +10,7 @@ import { NavigationContainer, NavigationIndependentTree } from '@react-navigatio
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
