@@ -15,7 +15,7 @@ export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
 
   const [fontsLoaded] = useFonts({
-    'Quicksand': require('../assets/fonts/Quicksand-VariableFont_wght.ttf'),
+    'Montserrat': require('../assets/fonts/Montserrat-VariableFont_wght.ttf'),
   });
 
   useEffect(() => {
@@ -47,14 +47,9 @@ export default function Page() {
   }
 
   return (
-    <><View style={styles.container}>
+    <View style={styles.container}>
       <Auth />
     </View>
-    <NavigationContainer>
-      <View style={styles.container}>
-        <Text style={styles.quicksand}></Text>
-      </View>
-    </NavigationContainer></>
   );
 }
 
@@ -63,7 +58,7 @@ const styles = StyleSheet.create({
     flex: 1, 
     backgroundColor: '#fff', 
   },
-  quicksand: {
-    fontFamily: 'Quicksand',
+  Montserrat: {
+    fontFamily: 'Montserrat',
   },
 });

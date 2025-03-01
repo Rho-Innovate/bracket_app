@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
-import { Text as Quicksand } from '../text';
+import { Text as Montserrat } from '../text';
 
 const GrayBG = { uri: 'https://digitalassets.daltile.com/content/dam/AmericanOlean/AO_ImageFiles/minimum/AO_MN44_12x24_Gray_Matte.jpg/jcr:content/renditions/cq5dam.web.570.570.jpeg' };
 
@@ -81,7 +81,7 @@ function HomeScreen() {
           style={styles.myEventsButton}
           onPress={() => setIsModalVisible(true)}
         >
-          <Quicksand style={styles.myEventsButtonText}>My Events</Quicksand>
+          <Montserrat style={styles.myEventsButtonText}>My Events</Montserrat>
         </TouchableOpacity>
         <TextInput 
           style={styles.searchBar} 
@@ -99,12 +99,12 @@ function HomeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Quicksand style={styles.modalTitle}>My Events</Quicksand>
+              <Montserrat style={styles.modalTitle}>My Events</Montserrat>
               <TouchableOpacity 
                 onPress={() => setIsModalVisible(false)}
                 style={styles.closeButton}
               >
-                <Quicksand style={styles.closeButtonText}>×</Quicksand>
+                <Montserrat style={styles.closeButtonText}>×</Montserrat>
               </TouchableOpacity>
             </View>
             <ActiveGameJoinRequests />
@@ -122,7 +122,7 @@ function HomeScreen() {
             {loading ? (
               <ActivityIndicator size="small" color="#2F622A" />
             ) : (
-              <Quicksand style={styles.refreshButtonText}>↻</Quicksand>
+              <Montserrat style={styles.refreshButtonText}>↻</Montserrat>
             )}
           </TouchableOpacity>
         </View>
@@ -138,21 +138,21 @@ function HomeScreen() {
                 onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
               >
                 <View style={styles.eventHeader}>
-                  <Quicksand style={styles.sportTag}>
+                  <Montserrat style={styles.sportTag}>
                     {sportIdToName[event.sport_id] || 'Sport'}
-                  </Quicksand>
-                  <Quicksand style={styles.playerCount}>
+                  </Montserrat>
+                  <Montserrat style={styles.playerCount}>
                     {event.current_players}/{event.max_players} players
-                  </Quicksand>
+                  </Montserrat>
                 </View>
 
-                <Quicksand style={styles.eventTitle}>
+                <Montserrat style={styles.eventTitle}>
                   {event.description || 'No description available'}
-                </Quicksand>
+                </Montserrat>
                 
-                <Quicksand style={styles.eventDate}>
+                <Montserrat style={styles.eventDate}>
                   {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
-                </Quicksand>
+                </Montserrat>
 
                 {expandedEvent === event.id && (
                   <View style={styles.expandedContent}>
@@ -165,13 +165,13 @@ function HomeScreen() {
                       onPress={() => handleJoinEvent(event.id)}
                       disabled={joining[event.id] || event.current_players >= event.max_players}
                     >
-                      <Quicksand style={styles.joinButtonText}>
+                      <Montserrat style={styles.joinButtonText}>
                         {event.current_players >= event.max_players 
                           ? 'Full' 
                           : joining[event.id] 
                             ? 'Joining...' 
                             : 'Join Event'}
-                      </Quicksand>
+                      </Montserrat>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 8,
     fontSize: 16,
-    fontFamily: 'Quicksand',
+    fontFamily: 'Montserrat',
   },
   scrollContent: {
     paddingBottom: 20,

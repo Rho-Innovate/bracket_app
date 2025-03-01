@@ -5,12 +5,12 @@ import { useFonts } from 'expo-font';
 import { NavigationContainer } from '@react-navigation/native';
 
 export function Text(props: TextProps) {
-  return <DefaultText {...props} style={[props.style, { fontFamily: 'Quicksand' }, { letterSpacing: .01 }]} />;
+  return <DefaultText {...props} style={[props.style, { fontFamily: 'Montserrat' }, { letterSpacing: .01 }]} />;
 }
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    'Quicksand': require('../assets/fonts/Quicksand-VariableFont_wght.ttf'),
+    'Montserrat': require('../assets/fonts/Montserrat-VariableFont_wght.ttf'),
   });
 
   useEffect(() => {
