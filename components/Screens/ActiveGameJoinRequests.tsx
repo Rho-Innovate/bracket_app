@@ -1,5 +1,5 @@
-//This is not gonna be connected to anything for the time being but I'm leaving it here for now until we figure out how it fits in.
 import React, { useEffect, useState } from 'react';
+import { Text as CustomText } from '../text';
 import {
   View,
   Text,
@@ -38,7 +38,6 @@ export default function ActiveGameJoinRequests() {
     if (!session?.user?.id) return;
     loadRequests();
   }, [session]);
-
 
   const loadRequests = async () => {
     if (!session?.user?.id) return;
@@ -116,20 +115,18 @@ export default function ActiveGameJoinRequests() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Active Game Join Requests</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.refreshButton}
-            onPress={handleRefresh}
-            disabled={refreshing}
-          >
-            {refreshing ? (
-              <ActivityIndicator size="small" color="#2F622A" />
-            ) : (
-              <Text style={styles.refreshButtonText}>↻</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        <CustomText style={styles.title}>Join Requests</CustomText>
+        <TouchableOpacity 
+          style={styles.refreshButton}
+          onPress={handleRefresh}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color="#2F622A" />
+          ) : (
+            <CustomText style={styles.refreshButtonText}>⟳</CustomText>
+          )}
+        </TouchableOpacity>
       </View>
       
       <ScrollView>
@@ -137,7 +134,7 @@ export default function ActiveGameJoinRequests() {
           <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
         ) : requests.length === 0 ? (
           <View style={styles.grayBox}>
-            <Text style={styles.boxText}>No active join requests</Text>
+            <CustomText style={styles.boxText}>No active join requests</CustomText>
           </View>
         ) : (
           requests.map((request) => (
@@ -145,20 +142,20 @@ export default function ActiveGameJoinRequests() {
               key={request.id} 
               style={[styles.grayBox, getStatusStyle(request.status)]}
             >
-              <Text style={styles.boxText}>Game ID: {request.game_request_id}</Text>
-              <Text style={[styles.boxText, getStatusTextStyle(request.status)]}>
+              <CustomText style={styles.boxText}>Game ID: {request.game_request_id}</CustomText>
+              <CustomText style={[styles.boxText, getStatusTextStyle(request.status)]}>
                 Status: {request.status}
-              </Text>
-              <Text style={styles.boxText}>
+              </CustomText>
+              <CustomText style={styles.boxText}>
                 Requested: {new Date(request.requested_at).toLocaleDateString()}
-              </Text>
+              </CustomText>
               
               {request.status === 'Rejected' && (
                 <TouchableOpacity 
                   style={styles.deleteButton}
                   onPress={() => confirmDelete(request.id)}
                 >
-                  <Text style={styles.deleteButtonText}>Delete Request</Text>
+                  <CustomText style={styles.deleteButtonText}>Delete Request</CustomText>
                 </TouchableOpacity>
               )}
             </View>
@@ -172,51 +169,44 @@ export default function ActiveGameJoinRequests() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
   },
   header: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2F622A',
-    textAlign: 'center',
-    marginBottom: 10, // Add space between title and button
-  },
-  buttonContainer: {
-    alignItems: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(39, 75, 13, 0.80)',
   },
   refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    paddingLeft: 4,
+    paddingTop: 4,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2F622A',
+    borderColor: 'rgba(39, 75, 13, 0.28)',
+    borderWidth: 2,
   },
   refreshButtonText: {
-    fontSize: 24, // Increased size
-    color: '#2F622A',
+    color: 'fff',
+    fontSize: 32,
   },
   loader: {
     marginTop: 20,
   },
   grayBox: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
-    padding: 20,
-    marginHorizontal: 16,
     marginBottom: 12,
   },
   boxText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 12,
+    color: '#000',
     marginBottom: 4,
+    fontWeight: '500',
   },
   acceptedBox: {
     backgroundColor: '#e7f3e8',

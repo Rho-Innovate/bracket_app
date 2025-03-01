@@ -1,7 +1,7 @@
 import { joinGameRequest, searchGameRequests } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing } from 'react-native';
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
 import { Text as Text } from '../text';
@@ -20,63 +20,119 @@ function formatDate(dateString: string) {
 }
 
 function HomeScreen() {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
-  const [joining, setJoining] = useState<{ [key: number]: boolean }>({});
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+const [events, setEvents] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
+const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
+const [joining, setJoining] = useState<{ [key: number]: boolean }>({});
+const [isModalVisible, setIsModalVisible] = useState(false);
+const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchEvents = async () => {
-    try {
-      const fetchedEvents = await searchGameRequests({
-        status: 'Open',
-        sort_by: 'recency',
-        sort_order: 'desc',
-        location: {
-          lat: 47.606209,
-          lng: 122.332069
-        },
-        radius: 0
-      });
+const fetchEvents = async () => {
+  try {
+    const fetchedEvents = await searchGameRequests({
+      status: 'Open',
+      sort_by: 'recency',
+      sort_order: 'desc',
+      location: {
+        lat: 47.606209,
+        lng: 122.332069
+      },
+      radius: 0
+    });
 
-      setEvents(fetchedEvents);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setEvents(fetchedEvents);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+useEffect(() => {
+  fetchEvents();
+}, []);
 
-  const handleRefresh = () => {
-    fetchEvents();   // Fetch with refresh flag
-  };
+const handleRefresh = () => {
+  fetchEvents();   // Fetch with refresh flag
+};
 
-  // Function to handle joining an event
-  const handleJoinEvent = async (eventId: number) => {
-    try {
-      setJoining((prev) => ({ ...prev, [eventId]: true }));
+// Function to handle joining an event
+const handleJoinEvent = async (eventId: number) => {
+  try {
+    setJoining((prev) => ({ ...prev, [eventId]: true }));
 
-      const updatedEvent = await joinGameRequest(eventId);
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => (event.id === eventId ? updatedEvent : event))
-      );
-    } catch (error) {
-      console.error('Error joining event:', error);
-    } finally {
-      setJoining((prev) => ({ ...prev, [eventId]: false }));
-    }
-  };
+    const updatedEvent = await joinGameRequest(eventId);
+    setEvents((prevEvents) =>
+      prevEvents.map((event) => (event.id === eventId ? updatedEvent : event))
+    );
+  } catch (error) {
+    console.error('Error joining event:', error);
+  } finally {
+    setJoining((prev) => ({ ...prev, [eventId]: false }));
+  }
+};
 
-  // Filter events based on search query
-  const filteredEvents = events.filter(event =>
-    event.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+// Filter events based on search query
+const filteredEvents = events.filter(event =>
+  event.description.toLowerCase().includes(searchQuery.toLowerCase())
+);
+
+const opacity = useRef(new Animated.Value(0)).current;
+const translateY = useRef(new Animated.Value(100)).current; // Start off-screen
+
+const fadeIn = () => {
+  opacity.setValue(0);
+  translateY.setValue(1000);
+  Animated.parallel([
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 300,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }),
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }),
+  ]).start();
+
+};
+
+const fadeOut = () => {
+  Animated.parallel([
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 300,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }),
+    Animated.timing(translateY, {
+      toValue: 1000,
+      duration: 300,
+      easing: Easing.in(Easing.ease),
+      useNativeDriver: true,
+    }),
+  ]).start(() => {
+    setIsModalVisible(false);
+  });
+};
+
+const animatedOverlayStyle = {
+  opacity: opacity,
+};
+
+const animatedContentStyle = {
+  transform: [{ translateY: translateY }],
+};
+
+useEffect(() => {
+  if (isModalVisible) {
+    fadeIn();
+  }
+}, [isModalVisible]);
 
 return (
 <View style={styles.container}>
@@ -110,27 +166,24 @@ return (
       <Text style={styles.myEventsButtonText}>My Events</Text>
     </TouchableOpacity>
   </View>
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isModalVisible}
-      onRequestClose={() => setIsModalVisible(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>My Events</Text>
-            <TouchableOpacity 
-              onPress={() => setIsModalVisible(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>×</Text>
-            </TouchableOpacity>
-          </View>
-          <ActiveGameJoinRequests />
+  <Modal
+    animationType="none"
+    transparent={true}
+    visible={isModalVisible}
+    onRequestClose={fadeOut}
+  >
+    <Animated.View style={[styles.modalOverlay, animatedOverlayStyle]}>
+      <Animated.View style={[styles.modalContent, animatedContentStyle]}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>My Events</Text>
+          <TouchableOpacity onPress={fadeOut}>
+            <Text style={styles.closeButtonText}>×</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-    </Modal>
+        <ActiveGameJoinRequests />
+      </Animated.View>
+    </Animated.View>
+  </Modal>
 
     <ScrollView contentContainerStyle={styles.scrollContent}>
       {loading ? (
@@ -307,7 +360,6 @@ const styles = StyleSheet.create({
   eventHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   sportTag: {
     backgroundColor: 'rgba(39, 75, 13, 0.04)',
@@ -360,33 +412,25 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    height: '90%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    height: '40%',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 28,
+    paddingTop: 12,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2F622A',
-  },
-  closeButton: {
-    padding: 10,
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(39, 75, 13, 1)',
   },
   closeButtonText: {
-    fontSize: 24,
+    fontSize: 40,
     color: '#666',
-  },
-  hostInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
   },
   profilePicture: {
     width: 60,
@@ -402,7 +446,6 @@ const styles = StyleSheet.create({
   eventContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 12,
   },
   leftContainer: {
@@ -412,7 +455,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   separator: {
-    height: 1,
+    height: 2,
     backgroundColor: '#E5E5E5',
     width: '100%',
   },
