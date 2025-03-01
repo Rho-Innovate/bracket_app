@@ -138,63 +138,69 @@ function HomeScreen() {
         ) : (
           <View style={styles.eventsContainer}>
             {filteredEvents.map((event, index) => (
-  <TouchableOpacity 
-    key={index} 
-    style={styles.eventCard}
-    onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
-  >
-    <View style={styles.eventContent}>
-      {/* Left Container */}
-      <View style={styles.leftContainer}>
-        <Text style={styles.eventTitle}>
-          {event.description || 'No description provided'}
-        </Text>
-        <Text style={styles.eventDate}>
-          {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
-        </Text>
-        <Text style={styles.hostName}>Player</Text>
-      </View>
-      
-      {/* Right Container */}
-      <View style={styles.rightContainer}>
-      <Image
-        style={styles.profilePicture}
-        source={require("../../assets/images/joesh.JPG")}      />
-      </View>
-    </View>
+              <View key={index}>
+                <TouchableOpacity 
+                  style={styles.eventCard}
+                  onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                  activeOpacity={1} // Prevents opacity change on press
+                >
+                  <View style={styles.eventContent}>
+                    {/* Left Container */}
+                    <View style={styles.leftContainer}>
+                      <Text style={styles.eventTitle}>
+                        {event.description || 'No description provided'}
+                      </Text>
+                      <Text style={styles.eventDate}>
+                        {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
+                      </Text>
+                      <Text style={styles.hostName}>Player</Text>
+                    </View>
+                    
+                    {/* Right Container */}
+                    <View style={styles.rightContainer}>
+                      <Image
+                        style={styles.profilePicture}
+                        source={require("../../assets/images/default-avatar.jpg")}
+                      />
+                    </View>
+                  </View>
 
-    <View style={styles.eventHeader}>
-      <Text style={styles.sportTag}>
-        {sportIdToName[event.sport_id] || 'Sport'}
-      </Text>
-      <Text style={styles.playerCount}>
-        {event.current_players}/{event.max_players}
-      </Text>
-    </View>
+                  <View style={styles.eventHeader}>
+                    <Text style={styles.sportTag}>
+                      {sportIdToName[event.sport_id] || 'Sport'}
+                    </Text>
+                    <Text style={styles.playerCount}>
+                      {event.current_players}/{event.max_players}
+                    </Text>
+                  </View>
 
-    {expandedEvent === event.id && (
-      <View style={styles.expandedContent}>
-        <TouchableOpacity
-          style={[
-            styles.joinButton,
-            (joining[event.id] || event.current_players >= event.max_players) && 
-            styles.disabledButton
-          ]}
-          onPress={() => handleJoinEvent(event.id)}
-          disabled={joining[event.id] || event.current_players >= event.max_players}
-        >
-          <Text style={styles.joinButtonText}>
-            {event.current_players >= event.max_players 
-              ? 'Full' 
-              : joining[event.id] 
-                ? 'Joining...' 
-                : 'Join Event'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    )}
-  </TouchableOpacity>
-))}
+                  {expandedEvent === event.id && (
+                    <View style={styles.expandedContent}>
+                      <TouchableOpacity
+                        style={[
+                          styles.joinButton,
+                          (joining[event.id] || event.current_players >= event.max_players) && 
+                          styles.disabledButton
+                        ]}
+                        onPress={() => handleJoinEvent(event.id)}
+                        disabled={joining[event.id] || event.current_players >= event.max_players}
+                      >
+                        <Text style={styles.joinButtonText}>
+                          {event.current_players >= event.max_players 
+                            ? 'Full' 
+                            : joining[event.id] 
+                              ? 'Joining...' 
+                              : 'Join Event'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </TouchableOpacity>
+                {index < filteredEvents.length - 1 && (
+                  <View style={styles.separator} />
+                )}
+              </View>
+            ))}
           </View>
         )}
       </ScrollView>
@@ -278,18 +284,17 @@ const styles = StyleSheet.create({
   },
   eventsContainer: {
     marginTop: 4,
-    paddingHorizontal: 28,
+    // paddingHorizontal: 28,
   },
   eventCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 28,
+    padding: 28,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   eventHeader: {
     flexDirection: 'row',
@@ -314,24 +319,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1A1A1A',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   eventDate: {
     fontSize: 12,
     color: 'rgba(0, 0, 0, 0.48)',
     fontWeight: '600',
-    marginBottom: 4,
+    // marginBottom: 4,
   },
   expandedContent: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
+    paddingTop: 36,
     borderTopColor: '#E5E5E5',
   },
   joinButton: {
     backgroundColor: '#2F622A',
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 28,
     alignItems: 'center',
   },
   disabledButton: {
@@ -339,8 +342,8 @@ const styles = StyleSheet.create({
   },
   joinButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
@@ -386,6 +389,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: 'rgba(0, 0, 0, 0.48)',
+    marginBottom: 12,
   },
   eventContent: {
     flexDirection: 'row',
@@ -398,6 +402,11 @@ const styles = StyleSheet.create({
   },
   rightContainer: {
     alignSelf: 'flex-start',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#E5E5E5',
+    width: '100%',
   },
 });
 
