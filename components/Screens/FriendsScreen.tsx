@@ -2,11 +2,12 @@ import { createStackNavigator, StackNavigationProp } from '@react-navigation/sta
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { Text as CustomText } from '../text';
 
 export default function ComingSoonScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.comingSoonText}>👥 Coming Soon!</Text>
+      <CustomText style={styles.comingSoonText}>👥 Coming Soon!</CustomText>
     </View>
   );
 }
