@@ -5,7 +5,7 @@ import { useFonts } from 'expo-font';
 import { NavigationContainer } from '@react-navigation/native';
 
 export function Text(props: TextProps) {
-  return <DefaultText {...props} style={[props.style, { fontFamily: 'Quicksand' }]} />;
+  return <DefaultText {...props} style={[props.style, { fontFamily: 'Quicksand' }, { letterSpacing: .01 }]} />;
 }
 
 export default function App() {
