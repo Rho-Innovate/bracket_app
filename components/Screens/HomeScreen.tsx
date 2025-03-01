@@ -6,14 +6,12 @@ import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
 import { Text as Text } from '../text';
 
-// Update the sport mapping code
 const sportIdToName: Record<number, string> = {
   1: 'Tennis',
   2: 'Basketball',
   3: 'Soccer'
 };
 
-// Helper function to format date
 function formatDate(dateString: string) {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
@@ -54,10 +52,9 @@ useEffect(() => {
 }, []);
 
 const handleRefresh = () => {
-  fetchEvents();   // Fetch with refresh flag
+  fetchEvents();
 };
 
-// Function to handle joining an event
 const handleJoinEvent = async (eventId: number) => {
   try {
     setJoining((prev) => ({ ...prev, [eventId]: true }));
@@ -73,17 +70,16 @@ const handleJoinEvent = async (eventId: number) => {
   }
 };
 
-// Filter events based on search query
 const filteredEvents = events.filter(event =>
   event.description.toLowerCase().includes(searchQuery.toLowerCase())
 );
 
 const opacity = useRef(new Animated.Value(0)).current;
-const translateY = useRef(new Animated.Value(100)).current; // Start off-screen
+const translateY = useRef(new Animated.Value(100)).current;
 
 const fadeIn = () => {
   opacity.setValue(0);
-  translateY.setValue(1000);
+  translateY.setValue(5000);
   Animated.parallel([
     Animated.timing(opacity, {
       toValue: 1,
@@ -110,7 +106,7 @@ const fadeOut = () => {
       useNativeDriver: true,
     }),
     Animated.timing(translateY, {
-      toValue: 1000,
+      toValue: 5000,
       duration: 300,
       easing: Easing.in(Easing.ease),
       useNativeDriver: true,
@@ -195,10 +191,9 @@ return (
               <TouchableOpacity 
                 style={styles.eventCard}
                 onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
-                activeOpacity={1} // Prevents opacity change on press
+                activeOpacity={1}
               >
                 <View style={styles.eventContent}>
-                  {/* Left Container */}
                   <View style={styles.leftContainer}>
                     <Text style={styles.eventTitle}>
                       {event.description || 'No description provided'}
@@ -209,7 +204,6 @@ return (
                     <Text style={styles.hostName}>Player</Text>
                   </View>
                   
-                  {/* Right Container */}
                   <View style={styles.rightContainer}>
                     <Image
                       style={styles.profilePicture}
@@ -300,13 +294,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   searchBar: {
-    height: 50, // Increased height
+    height: 50,
     flex: 1,
     borderRadius: 999,
     borderColor: '#E5E5E5',
     borderWidth: 2,
     paddingHorizontal: 16,
-    paddingVertical: 12, // Increased vertical padding
+    paddingVertical: 12,
     // marginBottom: 16,
     fontSize: 14,
     letterSpacing: -0.4,
@@ -412,7 +406,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    height: '40%',
+    height: '86%',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 28,
