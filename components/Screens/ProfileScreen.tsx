@@ -205,10 +205,10 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
       </View>
     );
   }
-
+  
   const renderDescription = () => (
     <View style={styles.section}>
-      <CustomText style={styles.sectionTitle}>About Me</CustomText>
+      <CustomText style={styles.sectionTitle}>About</CustomText>
       {isEditing ? (
         <View>
           <TextInput
@@ -277,62 +277,64 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header - Avatar & Name */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleAvatarPress}>
-          <Image
-            source={
-              profile.avatar_url
-                ? { uri: profile.avatar_url }
-                : { uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }
-            }
-            style={[
-              styles.avatar,
-              loading && { opacity: 0.7 }
-            ]}
-            defaultSource={{ uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
-            onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
-          />
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator color="#0C5B00" />
-            </View>
-          )}
-        </TouchableOpacity>
-        <View style={styles.infoContainer}>
-          <CustomText style={styles.name}>
-            {profile.first_name} {profile.last_name}
-          </CustomText>
-          {/* You can display more fields here as needed */}
+    <View style={styles.backContainer}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Header - Avatar & Name */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleAvatarPress}>
+            <Image
+              source={
+                profile.avatar_url
+                  ? { uri: profile.avatar_url }
+                  : { uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }
+              }
+              style={[
+                styles.avatar,
+                loading && { opacity: 0.7 }
+              ]}
+              defaultSource={{ uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
+              onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
+            />
+            {loading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator color="#0C5B00" />
+              </View>
+            )}
+          </TouchableOpacity>
+          <View style={styles.infoContainer}>
+            <CustomText style={styles.name}>
+              {profile.first_name} {profile.last_name}
+            </CustomText>
+            {/* You can display more fields here as needed */}
+          </View>
         </View>
-      </View>
 
-      {renderDescription()}
-      {renderSportsPreferences()}
+        {renderDescription()}
+        {renderSportsPreferences()}
 
-      {/* Buttons (Edit Profile, Onboarding, Sign Out) */}
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          style={styles.editProfileButton}
-          onPress={() => setIsEditing(true)}
-        >
-          <CustomText style={styles.buttonText}>Edit Profile</CustomText>
-        </TouchableOpacity>
+        {/* Buttons (Edit Profile, Onboarding, Sign Out) */}
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={() => setIsEditing(true)}
+          >
+            <CustomText style={styles.buttonText}>Edit profile</CustomText>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.setupButton}
-          onPress={() => navigation.navigate('Onboarding')}
-        >
-          <CustomText style={styles.setupButtonText}>Run Onboarding</CustomText>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.setupButton}
+            onPress={() => navigation.navigate('Onboarding')}
+          >
+            <CustomText style={styles.setupButtonText}>Get started with Bracket!</CustomText>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <CustomText style={styles.signOutButtonText}>Sign Out</CustomText>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <CustomText style={styles.signOutButtonText}>Sign out</CustomText>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+    );
 }
 
 // -------------------------------------------------
@@ -506,9 +508,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  backContainer: {
+    paddingHorizontal: 28,
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     backgroundColor: '#fff',
-    paddingHorizontal: 18,
     paddingVertical: 24,
   },
   header: {
@@ -519,7 +525,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    marginRight: 16,
     backgroundColor: '#f0f0f0',
   },
   infoContainer: {
@@ -530,59 +535,71 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 44,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   description: {
     fontSize: 14,
-    color: '#555',
+    fontWeight: '500',
+    color: 'rgba(0, 0, 0, .48)',
   },
   buttonsContainer: {
     marginTop: 16,
   },
   editProfileButton: {
-    backgroundColor: '#f3f3f3',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#rgba(1, 1, 1, .08)',
+    // paddingVertical: 12,
+    height: 50,
+    borderRadius: 999,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   setupButton: {
-    backgroundColor: '#0C5B00',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#274b0d',
+    height: 50,
+    // paddingVertical: 12,
+    borderRadius: 999,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   setupButtonText: {
+    fontSize: 12,
     color: '#fff',
     fontWeight: '600',
   },
   signOutButton: {
+    height: 50,
     backgroundColor: '#e53935',
-    paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 999,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   signOutButtonText: {
+    fontSize: 12,
     color: '#fff',
     fontWeight: '600',
   },
   buttonText: {
+    fontSize: 12,
     color: '#333',
     fontWeight: '600',
   },
   descriptionInput: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 28,
     padding: 12,
     minHeight: 100,
     textAlignVertical: 'top',
+    fontFamily: 'Montserrat',
+    fontWeight: '500',
   },
   editButtons: {
     flexDirection: 'row',
@@ -593,7 +610,7 @@ const styles = StyleSheet.create({
   editButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 999,
   },
   cancelButton: {
     backgroundColor: '#f3f3f3',
@@ -603,8 +620,8 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: '#fff',
-    fontWeight: '500',
-    
+    fontWeight: '600',
+    fontSize: 12,
   },
   loadingOverlay: {
     position: 'absolute',
