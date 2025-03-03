@@ -14,7 +14,8 @@ import {
   View,
 } from 'react-native';
 import { fetchOwnProfile, signOut, supabase, updateProfile, uploadAvatar } from '../../lib/supabase'; // <-- import from your supabase code
-//
+import { Text as CustomText } from '../text';
+
 type ProfileStackParamList = {
   Profile: undefined;
   Onboarding: undefined;
@@ -192,7 +193,7 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading profile...</Text>
+        <CustomText>Loading profile...</CustomText>
       </View>
     );
   }
@@ -200,14 +201,14 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
   if (!profile) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>No profile data found.</Text>
+        <CustomText>No profile data found.</CustomText>
       </View>
     );
   }
 
   const renderDescription = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>About Me</Text>
+      <CustomText style={styles.sectionTitle}>About Me</CustomText>
       {isEditing ? (
         <View>
           <TextInput
@@ -225,20 +226,20 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
                 setIsEditing(false);
               }}
             >
-              <Text style={styles.editButtonText}>Cancel</Text>
+              <CustomText style={styles.editButtonText}>Cancel</CustomText>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.editButton, styles.saveButton]}
               onPress={handleSaveDescription}
             >
-              <Text style={styles.editButtonText}>Save</Text>
+              <CustomText style={styles.editButtonText}>Save</CustomText>
             </TouchableOpacity>
           </View>
         </View>
       ) : (
-        <Text style={styles.description}>
+        <CustomText style={styles.description}>
           {profile.description || 'No description provided'}
-        </Text>
+        </CustomText>
       )}
     </View>
   );
@@ -247,26 +248,26 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
     if (!profile?.sports_preferences || !Array.isArray(profile.sports_preferences)) {
       return (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Sports</Text>
-          <Text style={styles.description}>No sports preferences set</Text>
+          <CustomText style={styles.sectionTitle}>My Sports</CustomText>
+          <CustomText style={styles.description}>No sports preferences set</CustomText>
         </View>
       );
     }
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>My Sports</Text>
+        <CustomText style={styles.sectionTitle}>My Sports</CustomText>
         {profile.sports_preferences.map((pref, index) => (
           <View key={index} style={styles.sportPreferenceCard}>
             <View style={styles.sportHeader}>
-              <Text style={styles.sportNameLarge}>{pref.sport}</Text>
+              <CustomText style={styles.sportNameLarge}>{pref.sport}</CustomText>
               <View style={[
                 styles.skillLevelBadge,
                 pref.skill_level === 'Beginner' && styles.beginnerBadge,
                 pref.skill_level === 'Intermediate' && styles.intermediateBadge,
                 pref.skill_level === 'Advanced' && styles.advancedBadge,
               ]}>
-                <Text style={styles.skillLevelText}>{pref.skill_level}</Text>
+                <CustomText style={styles.skillLevelText}>{pref.skill_level}</CustomText>
               </View>
             </View>
           </View>
@@ -300,9 +301,9 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
           )}
         </TouchableOpacity>
         <View style={styles.infoContainer}>
-          <Text style={styles.name}>
+          <CustomText style={styles.name}>
             {profile.first_name} {profile.last_name}
-          </Text>
+          </CustomText>
           {/* You can display more fields here as needed */}
         </View>
       </View>
@@ -316,18 +317,18 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
           style={styles.editProfileButton}
           onPress={() => setIsEditing(true)}
         >
-          <Text style={styles.buttonText}>Edit Profile</Text>
+          <CustomText style={styles.buttonText}>Edit Profile</CustomText>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.setupButton}
           onPress={() => navigation.navigate('Onboarding')}
         >
-          <Text style={styles.setupButtonText}>Run Onboarding</Text>
+          <CustomText style={styles.setupButtonText}>Run Onboarding</CustomText>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
+          <CustomText style={styles.signOutButtonText}>Sign Out</CustomText>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -346,8 +347,8 @@ function Onboarding({ navigation }: { navigation: ProfileScreenNavigationProp })
 
   return (
     <View style={styles.onboardingContainer}>
-      <Text style={styles.onboardingTitle}>What sports do you play?</Text>
-      <Text style={styles.onboardingSubtitle}>Select all that apply</Text>
+      <CustomText style={styles.onboardingTitle}>What sports do you play?</CustomText>
+      <CustomText style={styles.onboardingSubtitle}>Select all that apply</CustomText>
       
       <ScrollView style={styles.optionsContainer}>
         {sports.map((sport) => (
@@ -365,12 +366,12 @@ function Onboarding({ navigation }: { navigation: ProfileScreenNavigationProp })
               );
             }}
           >
-            <Text style={[
+            <CustomText style={[
               styles.sportOptionText,
               selectedSports.includes(sport) && styles.sportOptionTextSelected
             ]}>
               {sport}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -383,7 +384,7 @@ function Onboarding({ navigation }: { navigation: ProfileScreenNavigationProp })
         disabled={selectedSports.length === 0}
         onPress={() => navigation.navigate('OnboardingScreen2', { selectedSports })}
       >
-        <Text style={styles.nextButtonText}>Next</Text>
+        <CustomText style={styles.nextButtonText}>Next</CustomText>
       </TouchableOpacity>
     </View>
   );
@@ -432,13 +433,13 @@ function OnboardingScreen2({
 
   return (
     <View style={styles.onboardingContainer}>
-      <Text style={styles.onboardingTitle}>What's your skill level?</Text>
-      <Text style={styles.onboardingSubtitle}>Select for each sport</Text>
+      <CustomText style={styles.onboardingTitle}>What's your skill level?</CustomText>
+      <CustomText style={styles.onboardingSubtitle}>Select for each sport</CustomText>
 
       <ScrollView style={styles.optionsContainer}>
         {route.params.selectedSports.map((sport) => (
           <View key={sport} style={styles.sportSkillContainer}>
-            <Text style={styles.sportTitle}>{sport}</Text>
+            <CustomText style={styles.sportTitle}>{sport}</CustomText>
             <View style={styles.levelOptions}>
               {levels.map((level) => (
                 <TouchableOpacity
@@ -452,12 +453,12 @@ function OnboardingScreen2({
                     [sport]: level
                   }))}
                 >
-                  <Text style={[
+                  <CustomText style={[
                     styles.levelOptionText,
                     skillLevels[sport] === level && styles.levelOptionTextSelected
                   ]}>
                     {level}
-                  </Text>
+                  </CustomText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -473,9 +474,9 @@ function OnboardingScreen2({
         disabled={Object.keys(skillLevels).length !== route.params.selectedSports.length || loading}
         onPress={handleComplete}
       >
-        <Text style={styles.nextButtonText}>
+        <CustomText style={styles.nextButtonText}>
           {loading ? 'Saving...' : 'Complete'}
-        </Text>
+        </CustomText>
       </TouchableOpacity>
     </View>
   );

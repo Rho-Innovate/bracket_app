@@ -77,8 +77,8 @@ function HostPage() {
     // 
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <CustomText style={styles.header}>Create Event</CustomText >
-        <View style={styles.separator} />
+        <CustomText style={styles.header}>Create Event</CustomText>
+        <View style={styles.separator}/>
 
         <View style={styles.formGroup}>
           <CustomText style={styles.label}>Event Name</CustomText >
@@ -131,7 +131,7 @@ function HostPage() {
             style={styles.input}
             value={eventMaxPlayers}
             onChangeText={setEventMaxPlayers}
-            placeholder="Enter Max Players"
+            placeholder="Enter max players"
             keyboardType="numeric"
             placeholderTextColor="rgba(100, 116, 139, .48)"
           />
@@ -141,7 +141,7 @@ function HostPage() {
               style={styles.button}
               onPress={handleSubmit}
             >
-              <Text style={styles.buttonText}>Host!</Text>
+              <Text style={styles.buttonText}>Host</Text>
             </TouchableOpacity>
         
       </View>
@@ -158,7 +158,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     fontSize: 24,
     fontWeight: '700',
-    color: 'rgba(39, 75, 13, 1)',
+    color: '000',
+    marginTop: 36,
     marginBottom: 16,
     fontFamily: 'Montserrat',
   },
@@ -208,7 +209,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     borderBottomWidth: 4,
-    borderBottomColor: 'rgb(39, 75, 13)',
+    borderBottomColor: 'rgb(229, 229, 229)',
     marginBottom: 32,
   },
 });
