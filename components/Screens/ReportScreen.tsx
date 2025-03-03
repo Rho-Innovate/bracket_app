@@ -1,4 +1,4 @@
-//Need routes to report scores
+//Chai when you are navigating to this page pass the gameId with it so that this code can run
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -9,9 +9,16 @@ import {
   ScrollView,
 } from 'react-native';
 import { Alert } from 'react-native';
-import { updateEloAfterMatch, getJoinRequests } from '../../lib/supabase';
+import { updateEloAfterMatch, getJoinRequests, initializeElo } from '../../lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
+import { useRoute, RouteProp } from '@react-navigation/native';
+
+type RouteParams = {
+  ReportScreen: {
+    gameRequestId: string;
+  };
+};
 
 
 type Scores = {
@@ -40,6 +47,7 @@ const ScoreButton = ({ value, onIncrement, onDecrement }: ScoreButtonProps) => (
 );
 
 export default function ReportScreen() {
+  const route = useRoute<RouteProp<RouteParams, 'ReportScreen'>>();
   const [numSets, setNumSets] = useState(3);
   const [session, setSession] = useState<Session | null>(null);
   const [opponentId, setOpponentId] = useState<string | null>(null);
@@ -49,11 +57,18 @@ export default function ReportScreen() {
     set2: { player1: 0, player2: 0 },
     set3: { player1: 0, player2: 0 },
   });
+  
+  useEffect(() => {
+    console.log('Route params:', route.params);
+    console.log('Current gameRequestId:', gameRequestId);
+  }, [route.params, gameRequestId]);
 
   useEffect(() => {
     const fetchOpponentId = async () => {
-      if (!gameRequestId) return;
-      
+      if (!gameRequestId || !session?.user?.id) {
+        console.log('Missing required data:', { gameRequestId, userId: session?.user?.id });
+        return;
+      }
       try {
         const joinRequests = await getJoinRequests(null, session?.user?.id || '', {
           game_request_ids: [Number(gameRequestId)]
@@ -115,11 +130,21 @@ export default function ReportScreen() {
         result = 0; // draw
       }
 
-      // Update Elo ratings
+      console.log(opponentId)
+
       if (!session?.user?.id || !opponentId) {
         Alert.alert('Error', 'Cannot submit scores without opponent information');
         return;
       }
+
+      try {
+        await initializeElo(session.user.id, 1);
+        await initializeElo(opponentId, 1);
+      } catch (error) {
+        // Ignore errors from initialization as they likely mean ratings already exist
+        console.log('Elo initialization skipped');
+      }
+
       const eloUpdate = await updateEloAfterMatch(
         session.user.id,
         opponentId,
@@ -179,8 +204,8 @@ export default function ReportScreen() {
       <View style={styles.scoreTable}>
         <View style={styles.headerRow}>
           <Text style={styles.headerCell}>Set</Text>
-          <Text style={styles.headerCell}>Player 1</Text>
-          <Text style={styles.headerCell}>Player 2</Text>
+          <Text style={styles.headerCell}>Host</Text>
+          <Text style={styles.headerCell}>Guest</Text>
         </View>
 
         {[...Array(numSets)].map((_, index) => (
