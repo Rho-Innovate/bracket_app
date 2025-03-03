@@ -1,10 +1,10 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import { createClient } from '@supabase/supabase-js';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { Alert, Button, StyleSheet, Text, TextInput, View, Keyboard, TouchableWithoutFeedback, TouchableOpacity, ScrollView } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { createGameRequest } from '@/lib/supabase';
-
+import { Text as CustomText } from '../text';
 
 type ExploreStackParamList = {
   Join: undefined;
@@ -77,61 +77,73 @@ function HostPage() {
     // 
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <Text style={styles.header}>Create Event</Text>
-
+        <CustomText style={styles.header}>Create Event</CustomText>
+        <View style={styles.separator}/>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Name</Text>
+          <CustomText style={styles.label}>Event Name</CustomText >
           <TextInput
             style={styles.input}
             value={eventName}
             onChangeText={setEventName}
-            placeholder="Enter event name"
+            placeholder="Enter name"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Date</Text>
+          <CustomText style={styles.label}>Date</CustomText >
           <TextInput
             style={styles.input}
             value={eventDate}
             onChangeText={setEventDate}
             placeholder="YYYY-MM-DD"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Location</Text>
+          <CustomText style={styles.label}>Location</CustomText >
           <TextInput
             style={styles.input}
             value={eventLocation}
             onChangeText={setEventLocation}
-            placeholder="Enter event location"
+            placeholder="Enter location"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Description</Text>
+          <CustomText style={styles.label}>Description</CustomText >
           <TextInput
             style={[styles.input, styles.textArea]}
             value={eventDescription}
             onChangeText={setEventDescription}
-            placeholder="Enter event description"
+            placeholder="Enter description"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
             multiline
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Max Players</Text>
+          <CustomText style={styles.label}>Max Players</CustomText >
           <TextInput
             style={styles.input}
             value={eventMaxPlayers}
             onChangeText={setEventMaxPlayers}
-            placeholder="Enter Max Players"
+            placeholder="Enter max players"
             keyboardType="numeric"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
+        </ScrollView>
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={handleSubmit}
+        >
+          <CustomText style={styles.buttonText}>Host</CustomText>
+        </TouchableOpacity>
 
-        <Button title="Create Event" onPress={handleSubmit} />
       </View>
     </TouchableWithoutFeedback>
   );
@@ -140,30 +152,69 @@ function HostPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#fff',
   },
   header: {
+    paddingHorizontal: 28,
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontWeight: '700',
+    color: '000',
+    marginTop: 36,
+    marginBottom: 16,
+    fontFamily: 'Montserrat',
   },
   formGroup: {
-    marginBottom: 15,
+    paddingHorizontal: 28,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 12,
+    fontWeight: '500',
     marginBottom: 5,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
+    borderRadius: 28,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: 'Montserrat',
+    letterSpacing: -0.4,
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+  },
+  button: {
+    backgroundColor: '#274b0d',
+    // paddingHorizontal: 20,
+    // paddingVertical: 16,
+    height: 50,
+    width: '87%',
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+    alignSelf: 'center',
+    marginTop: 28,
+    position: 'absolute',
+    bottom: '2.7%',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  separator: {
+    borderBottomWidth: 4,
+    borderBottomColor: 'rgb(229, 229, 229)',
+    color: 'transparent',
+    // marginBottom: 32,
+  },
+  scrollContent: {
+    paddingTop: 32,
+    paddingBottom: 20,
   },
 });

@@ -129,10 +129,21 @@ export const deleteUserAccount = async () => {
 
 //Profile queries
 
-//PUT
-/**
- * Updates a user's profile.
- */
+// Update the Profile interface
+interface Profile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  avatar_url?: string;
+  description?: string;
+  sports_preferences?: Array<{
+    sport: string;
+    skill_level: string;
+    years_experience: number;
+  }>;
+}
+
+// Update the updateProfile function type
 export const updateProfile = async (
   id: string,
   profileData: Partial<{
@@ -143,11 +154,12 @@ export const updateProfile = async (
     gender: string;
     location: { lat: number; lng: number };
     description: string;
-    sports_preferences: {
+    avatar_url: string;
+    sports_preferences: Array<{
       sport: string;
       skill_level: string;
       years_experience: number;
-    }[];
+    }>;
   }>
 ) => {
   const { location, ...rest } = profileData;
@@ -485,7 +497,7 @@ export const getGameRequests = async (filters: {
   }
 };
 
-
+//Lowkey Useless
 export const joinGameRequest = async (gameId: number) => {
   try {
     // Get current game data
