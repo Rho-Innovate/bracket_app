@@ -14,7 +14,6 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../lib/supabase";
 import EmailSignup from './Signup';
 
@@ -63,7 +62,7 @@ export default function Auth() {
   });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -163,7 +162,7 @@ export default function Auth() {
           onClose={() => setShowEmailSignup(false)}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

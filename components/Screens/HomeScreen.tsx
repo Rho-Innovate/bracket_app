@@ -1,13 +1,13 @@
 import { createJoinRequest, searchGameRequests, joinGameRequest } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing, Dimensions } from 'react-native';
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
 import { Text as Text } from '../text';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
-
+import commonStyles from '../styles';
 
 const sportIdToName: Record<number, string> = {
   1: 'Tennis',
@@ -29,6 +29,8 @@ const [joining, setJoining] = useState<{ [key: number]: boolean }>({});
 const [isModalVisible, setIsModalVisible] = useState(false);
 const [searchQuery, setSearchQuery] = useState('');
 const [session, setSession] = useState<Session | null>(null);
+const [searchBarFocused, setSearchBarFocused] = useState(false);
+
 
 useEffect(() => {
   supabase.auth.getSession().then(({ data: { session } }) => {
@@ -37,35 +39,34 @@ useEffect(() => {
   });
 }, []);
 
+  const fetchEvents = async () => {
+    try {
+      const fetchedEvents = await searchGameRequests({
+        status: 'Open',
+        sort_by: 'recency',
+        sort_order: 'desc',
+        location: {
+          lat: 47.606209,
+          lng: 122.332069
+        },
+        radius: 0
+      });
 
-const fetchEvents = async () => {
-  try {
-    const fetchedEvents = await searchGameRequests({
-      status: 'Open',
-      sort_by: 'recency',
-      sort_order: 'desc',
-      location: {
-        lat: 47.606209,
-        lng: 122.332069
-      },
-      radius: 0
-    });
+      setEvents(fetchedEvents);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setEvents(fetchedEvents);
-  } catch (error) {
-    console.error('Error fetching events:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
-useEffect(() => {
-  fetchEvents();
-}, []);
-
-const handleRefresh = () => {
-  fetchEvents();
-};
+  const handleRefresh = () => {
+    fetchEvents();
+  };
 
 const handleJoinEvent = async (eventId: number) => {
   if (!session?.user?.id) {
@@ -112,153 +113,146 @@ const handleJoinEvent = async (eventId: number) => {
 const filteredEvents = events.filter(event =>
   event.description.toLowerCase().includes(searchQuery.toLowerCase())
 );
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(100)).current;
 
-const opacity = useRef(new Animated.Value(0)).current;
-const translateY = useRef(new Animated.Value(100)).current;
+  const fadeIn = () => {
+    opacity.setValue(0);
+    translateY.setValue(5000);
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 300,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-const fadeIn = () => {
-  opacity.setValue(0);
-  translateY.setValue(5000);
-  Animated.parallel([
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 300,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }),
-    Animated.timing(translateY, {
-      toValue: 0,
-      duration: 300,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }),
-  ]).start();
+  };
 
-};
+  const fadeOut = () => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 5000,
+        duration: 300,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsModalVisible(false);
+    });
+  };
 
-const fadeOut = () => {
-  Animated.parallel([
-    Animated.timing(opacity, {
-      toValue: 0,
-      duration: 300,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }),
-    Animated.timing(translateY, {
-      toValue: 5000,
-      duration: 300,
-      easing: Easing.in(Easing.ease),
-      useNativeDriver: true,
-    }),
-  ]).start(() => {
-    setIsModalVisible(false);
-  });
-};
+  const animatedOverlayStyle = {
+    opacity: opacity,
+  };
 
-const animatedOverlayStyle = {
-  opacity: opacity,
-};
+  const animatedContentStyle = {
+    transform: [{ translateY: translateY }],
+  };
 
-const animatedContentStyle = {
-  transform: [{ translateY: translateY }],
-};
+  useEffect(() => {
+    if (isModalVisible) {
+      fadeIn();
+    }
+  }, [isModalVisible]);
 
-useEffect(() => {
-  if (isModalVisible) {
-    fadeIn();
-  }
-}, [isModalVisible]);
+  const placeholderText = searchBarFocused ? "Search events..." : "⌕";
+  const placeholderTextColor = searchBarFocused ? "rgba(100, 116, 139, .48)" : "#000";
+  const searchBarFontSize = searchBarFocused ? 14 : 32;
 
-return (
-<View style={styles.container}>
-  <View style={styles.header}>
-    <View style={styles.searchContainer}>
-      <TextInput 
-        style={styles.searchBar} 
-        placeholder="Search events..." 
-        placeholderTextColor="#64748B" 
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        autoCorrect={false}
-        autoCapitalize="none"
-      />
-      <TouchableOpacity 
-        style={styles.refreshButton} 
-        onPress={handleRefresh}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator size="small" color="#2F622A" />
-        ) : (
-          <Text style={styles.refreshButtonText}>⟳</Text>
-        )}
-      </TouchableOpacity>
-    </View>
-    <TouchableOpacity 
-      style={styles.myEventsButton}
-      onPress={() => setIsModalVisible(true)}
-    >
-      <Text style={styles.myEventsButtonText}>My Events</Text>
-    </TouchableOpacity>
-  </View>
-  <Modal
-    animationType="none"
-    transparent={true}
-    visible={isModalVisible}
-    onRequestClose={fadeOut}
-  >
-    <Animated.View style={[styles.modalOverlay, animatedOverlayStyle]}>
-      <Animated.View style={[styles.modalContent, animatedContentStyle]}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>My Events</Text>
-          <TouchableOpacity onPress={fadeOut}>
-            <Text style={styles.closeButtonText}>×</Text>
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <Text style={[styles.headerText, { flex: 1 }]}>Home</Text>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={[
+              styles.searchBar,
+              searchBarFocused ? { flex: 1 } : {},
+              { fontSize: searchBarFontSize }
+            ]}
+            placeholder={placeholderText}
+            placeholderTextColor={placeholderTextColor}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+            autoCapitalize="none"
+            onFocus={() => setSearchBarFocused(true)}
+            onBlur={() => setSearchBarFocused(false)}
+          />
+           <TouchableOpacity
+            style={styles.myEventsButton}
+            onPress={() => setIsModalVisible(true)}
+          >
+            <Text style={styles.myEventsButtonText}>Me</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={handleRefresh}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#2F622A" />
+            ) : (
+              <Text style={styles.refreshButtonText}>⟳</Text>
+            )}
           </TouchableOpacity>
         </View>
-        <ActiveGameJoinRequests />
-      </Animated.View>
-    </Animated.View>
-  </Modal>
+      </View>
+      <View style={styles.headerSeparator} />
 
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
-      ) : (
-        <View style={styles.eventsContainer}>
-          {filteredEvents.map((event, index) => (
-            <View key={index}>
-              <TouchableOpacity 
-                style={styles.eventCard}
-                onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
-                activeOpacity={1}
-              >
-                <View style={styles.eventContent}>
-                  <View style={styles.leftContainer}>
-                    <Text style={styles.eventTitle}>
-                      {event.description || 'No description provided'}
-                    </Text>
-                    <Text style={styles.eventDate}>
-                      {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
-                    </Text>
-                    <Text style={styles.hostName}>Player</Text>
-                  </View>
-                  
-                  <View style={styles.rightContainer}>
-                    <Image
-                      style={styles.profilePicture}
-                      source={require("../../assets/images/default-avatar.jpg")}
-                    />
-                  </View>
-                </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
+        ) : (
+          <View style={styles.eventsContainer}>
+            {filteredEvents.map((event, index) => (
+              <View key={index}>
+                <TouchableOpacity
+                  style={styles.eventCard}
+                  onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
+                  activeOpacity={1}
+                >
+                  <View style={styles.eventContent}>
+                    <View style={styles.leftContainer}>
+                      <Text style={styles.eventTitle}>
+                        {event.description || 'No description provided'}
+                      </Text>
+                      <Text style={styles.eventDate}>
+                        {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
+                      </Text>
+                      <Text style={styles.hostName}>Player</Text>
+                    </View>
 
-                <View style={styles.eventHeader}>
-                  <Text style={styles.sportTag}>
-                    {sportIdToName[event.sport_id] || 'Sport'}
-                  </Text>
-                  <Text style={styles.playerCount}>
-                    {event.current_players}/{event.max_players}
-                  </Text>
-                </View>
+                    <View style={styles.rightContainer}>
+                      <Image
+                        style={styles.profilePicture}
+                        source={require("../../assets/images/default-avatar.jpg")}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.eventHeader}>
+                    <Text style={styles.sportTag}>
+                      {sportIdToName[event.sport_id] || 'Sport'}
+                    </Text>
+                    <Text style={styles.playerCount}>
+                      {event.current_players}/{event.max_players}
+                    </Text>
+                  </View>
 
                 {expandedEvent === event.id && (
                   <View style={styles.expandedContent}>
@@ -292,16 +286,33 @@ return (
                     </TouchableOpacity>
                   </View>
                 )}
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+      
+
+      <Modal
+        animationType="none"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={fadeOut}
+      >
+        <Animated.View style={[styles.modalOverlay, animatedOverlayStyle]}>
+          <Animated.View style={[styles.modalContent, animatedContentStyle]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>My Events</Text>
+              <TouchableOpacity onPress={fadeOut}>
+                <Text style={styles.closeButtonText}>×</Text>
               </TouchableOpacity>
-              {index < filteredEvents.length - 1 && (
-                <View style={styles.separator} />
-              )}
             </View>
-          ))}
-        </View>
-      )}
-    </ScrollView>
-  </View>
+            <View style={styles.modalHeaderSeparator} />
+            <ActiveGameJoinRequests />
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+    </View>
   );
 }
 
@@ -310,30 +321,47 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 28,
+    marginTop: 22.25,
+    marginBottom: 16,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '000',
+  },
+  headerSeparator: {
+    borderBottomWidth: 4,
+    borderBottomColor: 'rgb(229, 229, 229)',
+    // marginBottom: 32,
+  },
   header: {
     paddingHorizontal: 28,
-    paddingTop: 8,
+    paddingTop: 120,
     backgroundColor: 'transparent',
-    position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
     zIndex: 10,
   },
   myEventsButton: {
-    backgroundColor: '#274b0d',
-    paddingHorizontal: 20,
-    // paddingVertical: 16,
+    backgroundColor: '#rgba(39, 75, 13, 0.08)',
     height: 50,
-    borderRadius: 999,
-    position: 'absolute',
+    width: 50,
+    borderRadius: 25,
+    // paddingLeft: 4,
+    // paddingTop: 4,
+    marginLeft: 8,
     justifyContent: 'center',
-    bottom: '-1400%',
-    zIndex: 1,
-    alignSelf: 'center',
+    alignItems: 'center',
+    // borderColor: 'rgba(39, 75, 13, 0.28)',
+    // borderWidth: 2,
   },
   myEventsButtonText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -345,19 +373,18 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     height: 50,
-    flex: 1,
+    width: 50,
     borderRadius: 999,
-    borderColor: '#E5E5E5',
-    borderWidth: 2,
-    paddingHorizontal: 16,
+    // borderColor: '#ccc',
+    // borderWidth: 2,
+    paddingHorizontal: 12,
     paddingVertical: 12,
-    // marginBottom: 16,
     fontSize: 14,
     letterSpacing: -0.4,
     fontFamily: 'Montserrat',
     fontWeight: '500',
     color: '#000',
-    backgroundColor: '#fff',
+    backgroundColor: '#rgba(1, 1, 1, .08)',
   },
   scrollContent: {
     paddingBottom: 20,
@@ -373,12 +400,12 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingLeft: 4,
     paddingTop: 4,
-    marginLeft: 16,
-    backgroundColor: '#fff',
+    marginLeft: 8,
+    backgroundColor: '#rgba(1, 61, 90, .08)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: 'rgba(39, 75, 13, 0.28)',
-    borderWidth: 2,
+    // borderColor: 'rgba(39, 75, 13, 0.28)',
+    // borderWidth: 2,
   },
   refreshButtonText: {
     color: 'fff',
@@ -388,18 +415,11 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   eventsContainer: {
-    marginTop: 56,
-    // paddingHorizontal: 28,
+    // marginTop: 36,
   },
   eventCard: {
     backgroundColor: '#fff',
-    // borderRadius: 28,
     padding: 28,
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 4,
-    // elevation: 2,
   },
   eventHeader: {
     flexDirection: 'row',
@@ -459,10 +479,10 @@ const styles = StyleSheet.create({
     height: '86%',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingHorizontal: 28,
     paddingTop: 12,
   },
   modalHeader: {
+    paddingHorizontal: 28,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -470,8 +490,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: 'rgba(39, 75, 13, 1)',
+    color: '#000',
   },
+  modalHeaderSeparator: {
+    borderBottomWidth: 4,
+    borderBottomColor: 'rgb(229, 229, 229)',
+    marginBottom: 32,
+  },
+
   closeButtonText: {
     fontSize: 40,
     color: '#666',
@@ -503,6 +529,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E5E5',
     width: '100%',
   },
+  bottomContainer: {
+    paddingHorizontal: 28,
+    paddingBottom: 20,
+  }
 });
 
 export default HomeScreen;
