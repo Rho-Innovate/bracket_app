@@ -428,7 +428,7 @@ export const searchGameRequests = async (filters: {
   }
 };
 
-
+//Lowkey Useless
 export const joinGameRequest = async (gameId: number) => {
   try {
     // Get current game data

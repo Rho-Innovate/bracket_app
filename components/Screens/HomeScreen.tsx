@@ -1,10 +1,13 @@
-import { joinGameRequest, searchGameRequests } from '@/lib/supabase';
+import { createJoinRequest, searchGameRequests, joinGameRequest } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing } from 'react-native';
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
 import { Text as Text } from '../text';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '../../lib/supabase';
+
 
 const sportIdToName: Record<number, string> = {
   1: 'Tennis',
@@ -25,6 +28,15 @@ const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
 const [joining, setJoining] = useState<{ [key: number]: boolean }>({});
 const [isModalVisible, setIsModalVisible] = useState(false);
 const [searchQuery, setSearchQuery] = useState('');
+const [session, setSession] = useState<Session | null>(null);
+
+useEffect(() => {
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    console.log('Current session:', session?.user?.id);
+    setSession(session);
+  });
+}, []);
+
 
 const fetchEvents = async () => {
   try {
@@ -56,20 +68,47 @@ const handleRefresh = () => {
 };
 
 const handleJoinEvent = async (eventId: number) => {
+  if (!session?.user?.id) {
+    console.error('No user session found');
+    return;
+  }
+
   try {
+    console.log('Starting join event for eventId:', eventId);
     setJoining((prev) => ({ ...prev, [eventId]: true }));
 
-    const updatedEvent = await joinGameRequest(eventId);
+    // First create the join request
+    console.log('Calling createJoinRequest...');
+    const joinResult = await createJoinRequest(eventId, session.user.id);
+    console.log('Response from createJoinRequest:', joinResult);
+
+    // Then update the player count
+    console.log('Calling joinGameRequest...');
+    const gameResult = await joinGameRequest(eventId);
+    console.log('Response from joinGameRequest:', gameResult);
+
+    // Update the UI to show both changes
     setEvents((prevEvents) =>
-      prevEvents.map((event) => (event.id === eventId ? updatedEvent : event))
+      prevEvents.map((event) => {
+        if (event.id === eventId) {
+          return {
+            ...event,
+            has_requested: true,
+            current_players: gameResult.current_players // Update player count
+          };
+        }
+        return event;
+      })
     );
+
+    alert('Success - Your request to join has been submitted');
   } catch (error) {
     console.error('Error joining event:', error);
+    alert('Error - Failed to join event');
   } finally {
     setJoining((prev) => ({ ...prev, [eventId]: false }));
   }
 };
-
 const filteredEvents = events.filter(event =>
   event.description.toLowerCase().includes(searchQuery.toLowerCase())
 );
@@ -229,7 +268,18 @@ return (
                         (joining[event.id] || event.current_players >= event.max_players) && 
                         styles.disabledButton
                       ]}
-                      onPress={() => handleJoinEvent(event.id)}
+                      onPress={() => {
+                        // Add multiple console logs to track button press
+                        console.log('Button pressed - initial handler');
+                        console.log('Event details:', {
+                          eventId: event.id,
+                          isJoining: joining[event.id],
+                          currentPlayers: event.current_players,
+                          maxPlayers: event.max_players,
+                          isDisabled: joining[event.id] || event.current_players >= event.max_players
+                        });
+                        handleJoinEvent(event.id);
+                      }}
                       disabled={joining[event.id] || event.current_players >= event.max_players}
                     >
                       <Text style={styles.joinButtonText}>
