@@ -372,7 +372,7 @@ interface GameRequest {
   current_players: number;
   distance: number; // This is added by the Postgres function
 }
-export const searchGameRequests_ = async (filters: {
+export const searchGameRequests = async (filters: {
   location: { lat: number; lng: number };
   radius: number;
   sport_id?: number;

@@ -1,6 +1,6 @@
 //Need routes to report scores
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,11 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { Alert } from 'react-native';
+import { updateEloAfterMatch, getJoinRequests } from '../../lib/supabase';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '../../lib/supabase';
+
 
 type Scores = {
   [key: string]: {
@@ -36,14 +41,99 @@ const ScoreButton = ({ value, onIncrement, onDecrement }: ScoreButtonProps) => (
 
 export default function ReportScreen() {
   const [numSets, setNumSets] = useState(3);
+  const [session, setSession] = useState<Session | null>(null);
+  const [opponentId, setOpponentId] = useState<string | null>(null);
+  const [gameRequestId, setGameRequestId] = useState<string | null>(null);
   const [scores, setScores] = useState<Scores>({
     set1: { player1: 0, player2: 0 },
     set2: { player1: 0, player2: 0 },
     set3: { player1: 0, player2: 0 },
   });
 
-  const handleSubmit = () => {
-    console.log('Scores submitted:', scores);
+  useEffect(() => {
+    const fetchOpponentId = async () => {
+      if (!gameRequestId) return;
+      
+      try {
+        const joinRequests = await getJoinRequests(null, session?.user?.id || '', {
+          game_request_ids: [Number(gameRequestId)]
+        });
+  
+        // Find the accepted join request that isn't from the current user
+        const opponentRequest = joinRequests?.find(request => 
+          request.status === 'Accepted' && 
+          request.user_id !== session?.user?.id
+        );
+  
+        if (opponentRequest) {
+          setOpponentId(opponentRequest.user_id);
+          console.log('Found opponent ID:', opponentRequest.user_id);
+        }
+      } catch (error) {
+        console.error('Error fetching opponent:', error);
+      }
+    };
+  
+    fetchOpponentId();
+  }, [gameRequestId, session]);
+  
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Current session:', session?.user?.id);
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+
+  const handleSubmit = async () => {
+    try {
+      console.log('Scores submitted:', scores);
+      
+      // Calculate match result
+      let hostWins = 0;
+      let opponentWins = 0;
+      
+      Object.values(scores).forEach(set => {
+        if (set.player1 > set.player2) hostWins++;
+        if (set.player2 > set.player1) opponentWins++;
+      });
+
+      // Determine match result (-1, 0, 1)
+      let result: -1 | 0 | 1;
+      if (hostWins > opponentWins) {
+        result = 1; // host win
+      } else if (opponentWins > hostWins) {
+        result = -1; // host loss
+      } else {
+        result = 0; // draw
+      }
+
+      // Update Elo ratings
+      if (!session?.user?.id || !opponentId) {
+        Alert.alert('Error', 'Cannot submit scores without opponent information');
+        return;
+      }
+      const eloUpdate = await updateEloAfterMatch(
+        session.user.id,
+        opponentId,
+        1, //Hardcoded this 1 in for tennis for now until we have other games
+        result
+      );
+
+      console.log('Elo update result:', eloUpdate);
+      Alert.alert('Success', 'Scores and ratings have been updated');
+
+    } catch (error) {
+      console.error('Error submitting scores:', error);
+      Alert.alert('Error', 'Failed to submit scores');
+    }
   };
 
   const updateScore = (set: number, player: 'player1' | 'player2', increment: boolean) => {

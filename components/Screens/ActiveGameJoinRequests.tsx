@@ -47,7 +47,7 @@ export default function ActiveGameJoinRequests() {
     
     try {
       console.log('Fetching requests for user:', session.user.id);
-      const data = await getJoinRequests({ user_id: session.user.id });
+      const data = await getJoinRequests(null, session.user.id, { user_id: session.user.id });
       console.log('Raw response from getJoinRequests:', data);
       
       if (!data) {
