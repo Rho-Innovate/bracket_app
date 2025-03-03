@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
-import { View, StyleSheet } from 'react-native'; // Import View and StyleSheet
+import { View, StyleSheet } from 'react-native';
 import EventCreationPage from "./EventCreationPage";
 import FriendsScreen from "./FriendsScreen";
 import HomeScreen from "./HomeScreen";
@@ -26,7 +26,7 @@ export default function Navigation() {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}> {/* Enclosing View */}
+            <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? "home-sharp" : "home-outline"}
                 size={28}
@@ -42,7 +42,7 @@ export default function Navigation() {
         component={FriendsScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}> {/* Enclosing View */}
+            <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? "people-sharp" : "people-outline"}
                 size={28}
@@ -58,7 +58,7 @@ export default function Navigation() {
         component={EventCreationPage}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}> {/* Enclosing View */}
+            <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? "add-circle" : "add-circle-outline"}
                 size={28}
@@ -74,7 +74,7 @@ export default function Navigation() {
         component={LeaderboardsScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <View style={styles.tabItem}> {/* Enclosing View */}
+            <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? "podium-sharp" : "podium-outline"}
                 size={28}
