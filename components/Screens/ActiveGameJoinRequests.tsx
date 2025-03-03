@@ -40,13 +40,25 @@ export default function ActiveGameJoinRequests() {
   }, [session]);
 
   const loadRequests = async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id) {
+      console.log('No session user ID available');
+      return;
+    }
     
     try {
+      console.log('Fetching requests for user:', session.user.id);
       const data = await getJoinRequests({ user_id: session.user.id });
+      console.log('Raw response from getJoinRequests:', data);
+      
+      if (!data) {
+        console.log('No data returned from getJoinRequests');
+        return;
+      }
+      
       setRequests(data);
+      console.log('Requests set to:', data.length, 'items');
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in loadRequests:', error);
       Alert.alert('Error', 'Failed to load requests');
     } finally {
       setLoading(false);
@@ -112,13 +124,30 @@ export default function ActiveGameJoinRequests() {
     );
   };
 
+  console.log('Current requests:', {
+    count: requests.length,
+    requests: requests,
+    sessionUserId: session?.user?.id,
+    loading,
+    refreshing
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <CustomText style={styles.title}>Join Requests</CustomText>
         <TouchableOpacity 
           style={styles.refreshButton}
-          onPress={handleRefresh}
+          onPress={() => {
+            console.log('Refresh button pressed');
+            console.log('Current state:', {
+              loading,
+              refreshing,
+              requestCount: requests.length,
+              sessionId: session?.user?.id
+            });
+            handleRefresh();
+          }}
           disabled={refreshing}
         >
           {refreshing ? (
