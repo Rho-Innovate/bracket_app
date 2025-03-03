@@ -5,6 +5,7 @@ import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableO
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
 import { Text as Text } from '../text';
+import commonStyles from '../styles';
 
 const sportIdToName: Record<number, string> = {
   1: 'Tennis',
@@ -271,7 +272,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   myEventsButton: {
-    backgroundColor: '#274b0d',
+    backgroundColor: '#fff',
     paddingHorizontal: 20,
     // paddingVertical: 16,
     height: 50,
@@ -281,9 +282,11 @@ const styles = StyleSheet.create({
     bottom: '-1400%',
     zIndex: 1,
     alignSelf: 'center',
+    borderColor: '#2F622A',
+    borderWidth: 2,
   },
   myEventsButtonText: {
-    color: '#fff',
+    color: '#274b0d',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -338,7 +341,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   eventsContainer: {
-    marginTop: 56,
+    marginTop: 58,
     // paddingHorizontal: 28,
   },
   eventCard: {

@@ -1,10 +1,10 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import { createClient } from '@supabase/supabase-js';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { Alert, Button, StyleSheet, Text, TextInput, View, Keyboard, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { createGameRequest } from '@/lib/supabase';
-
+import { Text as CustomText } from '../text';
 
 type ExploreStackParamList = {
   Join: undefined;
@@ -77,61 +77,72 @@ function HostPage() {
     // 
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <Text style={styles.header}>Create Event</Text>
+        <CustomText style={styles.header}>Create Event</CustomText >
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Name</Text>
+          <CustomText style={styles.label}>Event Name</CustomText >
           <TextInput
             style={styles.input}
             value={eventName}
             onChangeText={setEventName}
-            placeholder="Enter event name"
+            placeholder="Enter name"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Date</Text>
+          <CustomText style={styles.label}>Date</CustomText >
           <TextInput
             style={styles.input}
             value={eventDate}
             onChangeText={setEventDate}
             placeholder="YYYY-MM-DD"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Location</Text>
+          <CustomText style={styles.label}>Location</CustomText >
           <TextInput
             style={styles.input}
             value={eventLocation}
             onChangeText={setEventLocation}
-            placeholder="Enter event location"
+            placeholder="Enter location"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Event Description</Text>
+          <CustomText style={styles.label}>Description</CustomText >
           <TextInput
             style={[styles.input, styles.textArea]}
             value={eventDescription}
             onChangeText={setEventDescription}
-            placeholder="Enter event description"
+            placeholder="Enter description"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
             multiline
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Max Players</Text>
+          <CustomText style={styles.label}>Max Players</CustomText >
           <TextInput
             style={styles.input}
             value={eventMaxPlayers}
             onChangeText={setEventMaxPlayers}
             placeholder="Enter Max Players"
             keyboardType="numeric"
+            placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
 
-        <Button title="Create Event" onPress={handleSubmit} />
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.buttonText}>Host!</Text>
+            </TouchableOpacity>
+        
       </View>
     </TouchableWithoutFeedback>
   );
@@ -140,30 +151,52 @@ function HostPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 28,
     backgroundColor: '#fff',
   },
   header: {
     fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontWeight: '700',
+    color: 'rgba(39, 75, 13, 1)',
+    marginBottom: 28,
   },
   formGroup: {
     marginBottom: 15,
   },
   label: {
     fontSize: 16,
+    fontWeight: '500',
     marginBottom: 5,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 5,
+    borderRadius: 16,
     padding: 10,
     fontSize: 16,
+    fontWeight: '500',
+    fontFamily: 'Montserrat',
+    letterSpacing: -0.4,
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
   },
+  button: {
+    backgroundColor: '#274b0d',
+    paddingHorizontal: 20,
+    // paddingVertical: 16,
+    height: 50,
+    borderRadius: 999,
+    justifyContent: 'center',
+    zIndex: 1,
+    alignSelf: 'center',
+    marginTop: 28,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
 });

@@ -29,6 +29,7 @@ export default function Navigation() {
               name={focused ? "home-sharp" : "home-outline"}
               size={28}
               color={color}
+              style={{ marginBottom: -12 }}
             />
           ),
         }}
@@ -42,6 +43,7 @@ export default function Navigation() {
               name={focused ? "people-sharp" : "people-outline"}
               size={28}
               color={color}
+              style={{ marginBottom: -12 }}
             />
           ),
         }}
@@ -55,6 +57,7 @@ export default function Navigation() {
               name={focused ? "add-circle" : "add-circle-outline"}
               size={28}
               color={color}
+              style={{ marginBottom: -12 }}
             />
           ),
         }}
@@ -68,6 +71,7 @@ export default function Navigation() {
               name={focused ? "podium-sharp" : "podium-outline"}
               size={28}
               color={color}
+              style={{ marginBottom: -12 }}
             />
           ),
         }}
@@ -81,6 +85,7 @@ export default function Navigation() {
               name={focused ? "person-sharp" : "person-outline"}
               size={28}
               color={color}
+              style={{ marginBottom: -12 }}
             />
           ),
         }}
