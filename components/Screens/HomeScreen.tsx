@@ -223,8 +223,11 @@ const filteredEvents = events.filter(event =>
               <View key={index}>
                 <TouchableOpacity
                   style={styles.eventCard}
-                  onPress={() => setExpandedEvent(expandedEvent === event.id ? null : event.id)}
-                  activeOpacity={1}
+                  onPress={() => {
+                    console.log('Event card pressed:', event.id);
+                    setExpandedEvent(expandedEvent === event.id ? null : event.id);
+                  }}
+                  activeOpacity={0.7}
                 >
                   <View style={styles.eventContent}>
                     <View style={styles.leftContainer}>
@@ -253,6 +256,7 @@ const filteredEvents = events.filter(event =>
                       {event.current_players}/{event.max_players}
                     </Text>
                   </View>
+                </TouchableOpacity>
 
                 {expandedEvent === event.id && (
                   <View style={styles.expandedContent}>
@@ -263,8 +267,7 @@ const filteredEvents = events.filter(event =>
                         styles.disabledButton
                       ]}
                       onPress={() => {
-                        // Add multiple console logs to track button press
-                        console.log('Button pressed - initial handler');
+                        console.log('Join button pressed for event:', event.id);
                         console.log('Event details:', {
                           eventId: event.id,
                           isJoining: joining[event.id],
