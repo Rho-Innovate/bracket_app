@@ -82,7 +82,7 @@ const handleJoinEvent = async (eventId: number) => {
     const joinResult = await createJoinRequest(eventId, session.user.id);
     console.log('Response from createJoinRequest:', joinResult);
 
-    // Then update the player count
+    // Then update the player count - HELLA BOOF NEED SOME OTHER ROUTE TO UPDATE PLAYER SCORE INSTEAD OF THIS WACK SHIT
     console.log('Calling joinGameRequest...');
     const gameResult = await joinGameRequest(eventId);
     console.log('Response from joinGameRequest:', gameResult);
