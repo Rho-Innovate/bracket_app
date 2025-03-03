@@ -211,5 +211,4 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgb(39, 75, 13)',
     marginBottom: 32,
   },
-
 });
