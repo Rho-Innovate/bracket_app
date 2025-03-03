@@ -1,7 +1,7 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import { createClient } from '@supabase/supabase-js';
 import React, { useState } from 'react';
-import { Alert, Button, StyleSheet, Text, TextInput, View, Keyboard, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import { Alert, Button, StyleSheet, Text, TextInput, View, Keyboard, TouchableWithoutFeedback, TouchableOpacity, ScrollView } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { createGameRequest } from '@/lib/supabase';
 import { Text as CustomText } from '../text';
@@ -79,7 +79,7 @@ function HostPage() {
       <View style={styles.container}>
         <CustomText style={styles.header}>Create Event</CustomText>
         <View style={styles.separator}/>
-
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.formGroup}>
           <CustomText style={styles.label}>Event Name</CustomText >
           <TextInput
@@ -136,14 +136,14 @@ function HostPage() {
             placeholderTextColor="rgba(100, 116, 139, .48)"
           />
         </View>
+        </ScrollView>
+        <TouchableOpacity 
+          style={styles.button}
+          onPress={handleSubmit}
+        >
+          <CustomText style={styles.buttonText}>Host</CustomText>
+        </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.button}
-              onPress={handleSubmit}
-            >
-              <CustomText style={styles.buttonText}>Host</CustomText>
-            </TouchableOpacity>
-        
       </View>
     </TouchableWithoutFeedback>
   );
@@ -210,6 +210,11 @@ const styles = StyleSheet.create({
   separator: {
     borderBottomWidth: 4,
     borderBottomColor: 'rgb(229, 229, 229)',
-    marginBottom: 32,
+    color: 'transparent',
+    // marginBottom: 32,
+  },
+  scrollContent: {
+    paddingTop: 32,
+    paddingBottom: 20,
   },
 });
