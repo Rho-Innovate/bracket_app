@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text as CustomText } from '../text';
 
 export default function ComingSoonScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.comingSoonText}>📊 Coming Soon!</Text>
+      <CustomText style={styles.comingSoonText}>📊 Coming Soon!</CustomText>
     </View>
   );
 }

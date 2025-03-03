@@ -1,19 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { type IconProps } from "@expo/vector-icons/build/createIconSet";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import React, { type ComponentProps } from "react";
+import React from "react";
+import { View, StyleSheet } from 'react-native'; // Import View and StyleSheet
 import EventCreationPage from "./EventCreationPage";
 import FriendsScreen from "./FriendsScreen";
 import HomeScreen from "./HomeScreen";
 import LeaderboardsScreen from "./LeaderboardsScreen";
 import ProfileScreen from "./ProfileScreen";
-
-export function TabBarIcon({
-  style,
-  ...rest
-}: IconProps<ComponentProps<typeof Ionicons>["name"]>) {
-  return <Ionicons size={28} style={[{ marginBottom: -3 }, style]} {...rest} />;
-}
 
 const Tab = createBottomTabNavigator();
 
@@ -23,6 +16,9 @@ export default function Navigation() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: { height: 60 },
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: 'rgba(39, 75, 13, 1)',
+        tabBarInactiveTintColor: 'rgba(39, 75, 13, 0.6)',
       }}
     >
       <Tab.Screen
@@ -30,11 +26,14 @@ export default function Navigation() {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "home-sharp" : "home-outline"}
-              size={24}
-              color={color}
-            />
+            <View style={styles.tabItem}> {/* Enclosing View */}
+              <Ionicons
+                name={focused ? "home-sharp" : "home-outline"}
+                size={28}
+                color={color}
+                style={{ marginBottom: -12 }}
+              />
+            </View>
           ),
         }}
       />
@@ -43,50 +42,46 @@ export default function Navigation() {
         component={FriendsScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "people-sharp" : "people-outline"}
-              size={24}
-              color={color}
-            />
+            <View style={styles.tabItem}> {/* Enclosing View */}
+              <Ionicons
+                name={focused ? "people-sharp" : "people-outline"}
+                size={28}
+                color={color}
+                style={{ marginBottom: -12 }}
+              />
+            </View>
           ),
         }}
       />
-            <Tab.Screen
+      <Tab.Screen
         name="Create Event"
         component={EventCreationPage}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "add-circle" : "add-circle-outline"}
-              size={24}
-              color={color}
-            />
+            <View style={styles.tabItem}> {/* Enclosing View */}
+              <Ionicons
+                name={focused ? "add-circle" : "add-circle-outline"}
+                size={28}
+                color={color}
+                style={{ marginBottom: -12 }}
+              />
+            </View>
           ),
         }}
       />
-      {/* <Tab.Screen
-        name="Explore"
-        component={ExploreScreen}
-        options={{
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "search-sharp" : "search-outline"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      /> */}
       <Tab.Screen
         name="Leaderboards"
         component={LeaderboardsScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "podium-sharp" : "podium-outline"}
-              size={24}
-              color={color}
-            />
+            <View style={styles.tabItem}> {/* Enclosing View */}
+              <Ionicons
+                name={focused ? "podium-sharp" : "podium-outline"}
+                size={28}
+                color={color}
+                style={{ marginBottom: -12 }}
+              />
+            </View>
           ),
         }}
       />
@@ -95,14 +90,27 @@ export default function Navigation() {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "person-sharp" : "person-outline"}
-              size={24}
-              color={color}
-            />
+            <View style={styles.tabItem}>
+              <Ionicons
+                name={focused ? "person-sharp" : "person-outline"}
+                size={28}
+                color={color}
+                style={{ marginBottom: -12 }}
+              />
+            </View>
           ),
         }}
       />
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  tabItem: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    width: 86,
+    height: 40,
+  },
+});

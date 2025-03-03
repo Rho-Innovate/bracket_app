@@ -1,6 +1,6 @@
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import React from 'react';
 import Auth from '../components/login_signup/Auth';
 import ActiveGameJoinRequests from '../components/Screens/ActiveGameJoinRequests';
@@ -9,7 +9,7 @@ import LoginNav from '../components/login_signup/Login Nav';
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { Text } from '../components/text';
+import { StatusBar } from 'expo-status-bar';
 
 export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
@@ -48,7 +48,7 @@ export default function Page() {
 
   return (
     <View style={styles.container}>
-      <Auth />
+      <Auth/>
     </View>
   );
 }

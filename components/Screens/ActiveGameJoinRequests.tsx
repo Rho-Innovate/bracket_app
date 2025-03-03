@@ -168,6 +168,7 @@ export default function ActiveGameJoinRequests() {
 
 const styles = StyleSheet.create({
   container: {
+    paddingHorizontal: 28,
     flex: 1,
   },
   header: {
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'rgba(39, 75, 13, 0.80)',
+    color: '#rgba(1, 61, 90, 1)',
   },
   refreshButton: {
     width: 50,
@@ -186,11 +187,10 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingLeft: 4,
     paddingTop: 4,
-    backgroundColor: '#fff',
+    marginLeft: 8,
+    backgroundColor: '#rgba(1, 61, 90, .08)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: 'rgba(39, 75, 13, 0.28)',
-    borderWidth: 2,
   },
   refreshButtonText: {
     color: 'fff',

@@ -14,7 +14,8 @@ import {
   View,
 } from 'react-native';
 import { fetchOwnProfile, signOut, supabase, updateProfile, uploadAvatar } from '../../lib/supabase'; // <-- import from your supabase code
-//
+import { Text as CustomText } from '../text';
+
 type ProfileStackParamList = {
   Profile: undefined;
   Onboarding: undefined;
@@ -192,7 +193,7 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading profile...</Text>
+        <CustomText>Loading profile...</CustomText>
       </View>
     );
   }
@@ -200,14 +201,14 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
   if (!profile) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>No profile data found.</Text>
+        <CustomText>No profile data found.</CustomText>
       </View>
     );
   }
-
+  
   const renderDescription = () => (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>About Me</Text>
+      <CustomText style={styles.sectionTitle}>About</CustomText>
       {isEditing ? (
         <View>
           <TextInput
@@ -225,20 +226,20 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
                 setIsEditing(false);
               }}
             >
-              <Text style={styles.editButtonText}>Cancel</Text>
+              <CustomText style={styles.editButtonText}>Cancel</CustomText>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.editButton, styles.saveButton]}
               onPress={handleSaveDescription}
             >
-              <Text style={styles.editButtonText}>Save</Text>
+              <CustomText style={styles.editButtonText}>Save</CustomText>
             </TouchableOpacity>
           </View>
         </View>
       ) : (
-        <Text style={styles.description}>
+        <CustomText style={styles.description}>
           {profile.description || 'No description provided'}
-        </Text>
+        </CustomText>
       )}
     </View>
   );
@@ -247,26 +248,26 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
     if (!profile?.sports_preferences || !Array.isArray(profile.sports_preferences)) {
       return (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Sports</Text>
-          <Text style={styles.description}>No sports preferences set</Text>
+          <CustomText style={styles.sectionTitle}>My Sports</CustomText>
+          <CustomText style={styles.description}>No sports preferences set</CustomText>
         </View>
       );
     }
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>My Sports</Text>
+        <CustomText style={styles.sectionTitle}>My Sports</CustomText>
         {profile.sports_preferences.map((pref, index) => (
           <View key={index} style={styles.sportPreferenceCard}>
             <View style={styles.sportHeader}>
-              <Text style={styles.sportNameLarge}>{pref.sport}</Text>
+              <CustomText style={styles.sportNameLarge}>{pref.sport}</CustomText>
               <View style={[
                 styles.skillLevelBadge,
                 pref.skill_level === 'Beginner' && styles.beginnerBadge,
                 pref.skill_level === 'Intermediate' && styles.intermediateBadge,
                 pref.skill_level === 'Advanced' && styles.advancedBadge,
               ]}>
-                <Text style={styles.skillLevelText}>{pref.skill_level}</Text>
+                <CustomText style={styles.skillLevelText}>{pref.skill_level}</CustomText>
               </View>
             </View>
           </View>
@@ -276,62 +277,64 @@ function Profile({ navigation }: { navigation: ProfileScreenNavigationProp }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header - Avatar & Name */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleAvatarPress}>
-          <Image
-            source={
-              profile.avatar_url
-                ? { uri: profile.avatar_url }
-                : { uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }
-            }
-            style={[
-              styles.avatar,
-              loading && { opacity: 0.7 }
-            ]}
-            defaultSource={{ uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
-            onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
-          />
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator color="#0C5B00" />
-            </View>
-          )}
-        </TouchableOpacity>
-        <View style={styles.infoContainer}>
-          <Text style={styles.name}>
-            {profile.first_name} {profile.last_name}
-          </Text>
-          {/* You can display more fields here as needed */}
+    <View style={styles.backContainer}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Header - Avatar & Name */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleAvatarPress}>
+            <Image
+              source={
+                profile.avatar_url
+                  ? { uri: profile.avatar_url }
+                  : { uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }
+              }
+              style={[
+                styles.avatar,
+                loading && { opacity: 0.7 }
+              ]}
+              defaultSource={{ uri: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y' }}
+              onError={(e) => console.log('Error loading image:', e.nativeEvent.error)}
+            />
+            {loading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator color="#0C5B00" />
+              </View>
+            )}
+          </TouchableOpacity>
+          <View style={styles.infoContainer}>
+            <CustomText style={styles.name}>
+              {profile.first_name} {profile.last_name}
+            </CustomText>
+            {/* You can display more fields here as needed */}
+          </View>
         </View>
-      </View>
 
-      {renderDescription()}
-      {renderSportsPreferences()}
+        {renderDescription()}
+        {renderSportsPreferences()}
 
-      {/* Buttons (Edit Profile, Onboarding, Sign Out) */}
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          style={styles.editProfileButton}
-          onPress={() => setIsEditing(true)}
-        >
-          <Text style={styles.buttonText}>Edit Profile</Text>
-        </TouchableOpacity>
+        {/* Buttons (Edit Profile, Onboarding, Sign Out) */}
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={() => setIsEditing(true)}
+          >
+            <CustomText style={styles.buttonText}>Edit profile</CustomText>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.setupButton}
-          onPress={() => navigation.navigate('Onboarding')}
-        >
-          <Text style={styles.setupButtonText}>Run Onboarding</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.setupButton}
+            onPress={() => navigation.navigate('Onboarding')}
+          >
+            <CustomText style={styles.setupButtonText}>Get started with Bracket!</CustomText>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <CustomText style={styles.signOutButtonText}>Sign out</CustomText>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+    );
 }
 
 // -------------------------------------------------
@@ -346,8 +349,8 @@ function Onboarding({ navigation }: { navigation: ProfileScreenNavigationProp })
 
   return (
     <View style={styles.onboardingContainer}>
-      <Text style={styles.onboardingTitle}>What sports do you play?</Text>
-      <Text style={styles.onboardingSubtitle}>Select all that apply</Text>
+      <CustomText style={styles.onboardingTitle}>What sports do you play?</CustomText>
+      <CustomText style={styles.onboardingSubtitle}>Select all that apply</CustomText>
       
       <ScrollView style={styles.optionsContainer}>
         {sports.map((sport) => (
@@ -365,12 +368,12 @@ function Onboarding({ navigation }: { navigation: ProfileScreenNavigationProp })
               );
             }}
           >
-            <Text style={[
+            <CustomText style={[
               styles.sportOptionText,
               selectedSports.includes(sport) && styles.sportOptionTextSelected
             ]}>
               {sport}
-            </Text>
+            </CustomText>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -383,7 +386,7 @@ function Onboarding({ navigation }: { navigation: ProfileScreenNavigationProp })
         disabled={selectedSports.length === 0}
         onPress={() => navigation.navigate('OnboardingScreen2', { selectedSports })}
       >
-        <Text style={styles.nextButtonText}>Next</Text>
+        <CustomText style={styles.nextButtonText}>Next</CustomText>
       </TouchableOpacity>
     </View>
   );
@@ -432,13 +435,13 @@ function OnboardingScreen2({
 
   return (
     <View style={styles.onboardingContainer}>
-      <Text style={styles.onboardingTitle}>What's your skill level?</Text>
-      <Text style={styles.onboardingSubtitle}>Select for each sport</Text>
+      <CustomText style={styles.onboardingTitle}>What's your skill level?</CustomText>
+      <CustomText style={styles.onboardingSubtitle}>Select for each sport</CustomText>
 
       <ScrollView style={styles.optionsContainer}>
         {route.params.selectedSports.map((sport) => (
           <View key={sport} style={styles.sportSkillContainer}>
-            <Text style={styles.sportTitle}>{sport}</Text>
+            <CustomText style={styles.sportTitle}>{sport}</CustomText>
             <View style={styles.levelOptions}>
               {levels.map((level) => (
                 <TouchableOpacity
@@ -452,12 +455,12 @@ function OnboardingScreen2({
                     [sport]: level
                   }))}
                 >
-                  <Text style={[
+                  <CustomText style={[
                     styles.levelOptionText,
                     skillLevels[sport] === level && styles.levelOptionTextSelected
                   ]}>
                     {level}
-                  </Text>
+                  </CustomText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -473,9 +476,9 @@ function OnboardingScreen2({
         disabled={Object.keys(skillLevels).length !== route.params.selectedSports.length || loading}
         onPress={handleComplete}
       >
-        <Text style={styles.nextButtonText}>
+        <CustomText style={styles.nextButtonText}>
           {loading ? 'Saving...' : 'Complete'}
-        </Text>
+        </CustomText>
       </TouchableOpacity>
     </View>
   );
@@ -505,9 +508,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  backContainer: {
+    paddingHorizontal: 28,
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     backgroundColor: '#fff',
-    paddingHorizontal: 18,
     paddingVertical: 24,
   },
   header: {
@@ -518,7 +525,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    marginRight: 16,
     backgroundColor: '#f0f0f0',
   },
   infoContainer: {
@@ -529,59 +535,71 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 44,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   description: {
     fontSize: 14,
-    color: '#555',
+    fontWeight: '500',
+    color: 'rgba(0, 0, 0, .48)',
   },
   buttonsContainer: {
     marginTop: 16,
   },
   editProfileButton: {
-    backgroundColor: '#f3f3f3',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#rgba(1, 1, 1, .08)',
+    // paddingVertical: 12,
+    height: 50,
+    borderRadius: 999,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   setupButton: {
-    backgroundColor: '#0C5B00',
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: '#274b0d',
+    height: 50,
+    // paddingVertical: 12,
+    borderRadius: 999,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
   setupButtonText: {
+    fontSize: 12,
     color: '#fff',
     fontWeight: '600',
   },
   signOutButton: {
+    height: 50,
     backgroundColor: '#e53935',
-    paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 999,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   signOutButtonText: {
+    fontSize: 12,
     color: '#fff',
     fontWeight: '600',
   },
   buttonText: {
+    fontSize: 12,
     color: '#333',
     fontWeight: '600',
   },
   descriptionInput: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 28,
     padding: 12,
     minHeight: 100,
     textAlignVertical: 'top',
+    fontFamily: 'Montserrat',
+    fontWeight: '500',
   },
   editButtons: {
     flexDirection: 'row',
@@ -592,7 +610,7 @@ const styles = StyleSheet.create({
   editButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 6,
+    borderRadius: 999,
   },
   cancelButton: {
     backgroundColor: '#f3f3f3',
@@ -602,8 +620,8 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: '#fff',
-    fontWeight: '500',
-    
+    fontWeight: '600',
+    fontSize: 12,
   },
   loadingOverlay: {
     position: 'absolute',

@@ -8,10 +8,8 @@ import {
   Alert, 
   ScrollView,
   Modal,
-  SafeAreaView 
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
-
 
 type EmailSignupProps = {
   visible: boolean;
@@ -71,7 +69,7 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
       animationType="slide"
       presentationStyle="fullScreen"
     >
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <Text style={styles.title}>Create Account</Text>
           
@@ -143,7 +141,7 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
             />
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

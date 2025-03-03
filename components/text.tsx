@@ -11,8 +11,8 @@ export function Text(props: TextProps) {
 export default function App() {
   const [fontsLoaded] = useFonts({
     'Montserrat': require('../assets/fonts/Montserrat-VariableFont_wght.ttf'),
+    'Quicksand': require('../assets/fonts/Quicksand-VariableFont_wght.ttf'),
   });
-
   useEffect(() => {
     if (!fontsLoaded) {
       SplashScreen.preventAutoHideAsync();
@@ -28,7 +28,8 @@ export default function App() {
   return (
     <NavigationContainer>
       <View style={styles.container}>
-        <Text style={{ fontSize: 24 }}></Text>
+        <Text style={{ fontSize: 24 }}>Main Heading</Text>
+        <Text style={styles.subheading}>Quicksand Subheading</Text>
       </View>
     </NavigationContainer>
   );
@@ -40,5 +41,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+  },
+  subheading: {
+    fontFamily: 'Quicksand',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
