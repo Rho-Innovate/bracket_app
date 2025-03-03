@@ -723,7 +723,7 @@ export const updateJoinRequestStatus = async (
       // Accepting a new user
       if (gameRequest.current_players >= gameRequest.max_players) {
         throw new Error('Game request is already full');
-      }
+      } 
       playerCountChange = 1;
     } else if (newStatus === 'Rejected' && joinRequest.status === 'Accepted') {
       // Changing from Accepted to Rejected, decrease player count
@@ -800,3 +800,108 @@ export const uploadAvatar = async (userId: string, base64Image: string) => {
     throw error;
   }
 };
+
+/*
+* Elo Routes
+*/
+
+// POST
+/**
+ * Initialize a user's Elo rating for a specific sport.
+ */
+export const initializeElo = async (userId: string, sportId: number) => {
+  try {
+    // Check if Elo rating already exists for this user & sport
+    const { data: existingElo, error: checkError } = await supabase
+      .from('elo_ratings')
+      .select('id')
+      .eq('id', userId)
+      .eq('sport_id', sportId)
+      .single();
+
+    if (existingElo) {
+      throw new Error('Elo rating already exists for this sport.');
+    }
+
+    // Insert new Elo record
+    const { data, error } = await supabase.from('elo_ratings').insert([
+      {
+        id: userId, // Matches the profile ID
+        sport_id: sportId,
+        rating: 1000,
+        sigma: 30,
+        // created_at: new Date().toISOString(), // Uncomment if handling timestamps manually
+        // updated_at: new Date().toISOString(),
+      },
+    ]);
+
+    if (error) {
+      console.error('Error initializing Elo:', error.message);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error initializing Elo:', error);
+    throw error;
+  }
+};
+
+// GET
+/**
+ * Get all Elo ratings for a user, returned as a map of sport_id to rating.
+ */
+export const getUserElos = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('elo_ratings')
+      .select('sport_id, rating')
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error fetching Elo ratings:', error.message);
+      throw error;
+    }
+
+    // Convert array to a map of { sport_id: rating }
+    const eloMap: Record<number, number> = {};
+    data.forEach((entry) => {
+      eloMap[entry.sport_id] = entry.rating;
+    });
+
+    return eloMap;
+  } catch (error) {
+    console.error('Unexpected error fetching Elo ratings:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get a user's Elo rating for a specific sport.
+ */
+export const getUserEloForSport = async (userId: string, sportId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('elo_ratings')
+      .select('rating')
+      .eq('id', userId)
+      .eq('sport_id', sportId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching Elo for sport:', error.message);
+      throw error;
+    }
+
+    return data.rating; // Return the Elo rating
+  } catch (error) {
+    console.error('Unexpected error fetching Elo for sport:', error);
+    throw error;
+  }
+};
+
+
+// PUT (MATCHUP)
+
+
+
