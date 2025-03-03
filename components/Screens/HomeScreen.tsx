@@ -138,7 +138,7 @@ return (
       <TextInput 
         style={styles.searchBar} 
         placeholder="Search events..." 
-        placeholderTextColor="#64748B" 
+        placeholderTextColor="rgba(100, 116, 139, .48)" 
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoCorrect={false}
@@ -273,12 +273,14 @@ const styles = StyleSheet.create({
   },
   myEventsButton: {
     backgroundColor: '#fff',
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
     // paddingVertical: 16,
     height: 50,
+    width: '100%',
     borderRadius: 999,
     position: 'absolute',
     justifyContent: 'center',
+    alignItems: 'center',
     bottom: '-1400%',
     zIndex: 1,
     alignSelf: 'center',
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
     height: 50,
     flex: 1,
     borderRadius: 999,
-    borderColor: '#E5E5E5',
+    borderColor: '#ccc',
     borderWidth: 2,
     paddingHorizontal: 16,
     paddingVertical: 12,

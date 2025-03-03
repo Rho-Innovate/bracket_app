@@ -78,6 +78,7 @@ function HostPage() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
         <CustomText style={styles.header}>Create Event</CustomText >
+        <View style={styles.separator} />
 
         <View style={styles.formGroup}>
           <CustomText style={styles.label}>Event Name</CustomText >
@@ -151,29 +152,32 @@ function HostPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 28,
     backgroundColor: '#fff',
   },
   header: {
+    paddingHorizontal: 28,
     fontSize: 24,
     fontWeight: '700',
     color: 'rgba(39, 75, 13, 1)',
-    marginBottom: 28,
+    marginBottom: 16,
+    fontFamily: 'Montserrat',
   },
   formGroup: {
-    marginBottom: 15,
+    paddingHorizontal: 28,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '500',
     marginBottom: 5,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 16,
-    padding: 10,
-    fontSize: 16,
+    borderRadius: 28,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 12,
     fontWeight: '500',
     fontFamily: 'Montserrat',
     letterSpacing: -0.4,
@@ -184,19 +188,28 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#274b0d',
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
     // paddingVertical: 16,
     height: 50,
+    width: '87%',
     borderRadius: 999,
     justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 1,
     alignSelf: 'center',
     marginTop: 28,
+    position: 'absolute',
+    bottom: '2.7%',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  separator: {
+    borderBottomWidth: 4,
+    borderBottomColor: 'rgb(39, 75, 13)',
+    marginBottom: 32,
   },
 
 });
