@@ -141,7 +141,7 @@ function HostPage() {
               style={styles.button}
               onPress={handleSubmit}
             >
-              <Text style={styles.buttonText}>Host</Text>
+              <CustomText style={styles.buttonText}>Host</CustomText>
             </TouchableOpacity>
         
       </View>

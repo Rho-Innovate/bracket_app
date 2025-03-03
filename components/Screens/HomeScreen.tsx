@@ -263,6 +263,7 @@ function HomeScreen() {
                 <Text style={styles.closeButtonText}>×</Text>
               </TouchableOpacity>
             </View>
+            <View style={styles.modalHeaderSeparator} />
             <ActiveGameJoinRequests />
           </Animated.View>
         </Animated.View>
@@ -434,10 +435,10 @@ const styles = StyleSheet.create({
     height: '86%',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingHorizontal: 28,
     paddingTop: 12,
   },
   modalHeader: {
+    paddingHorizontal: 28,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -445,8 +446,14 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: 'rgba(39, 75, 13, 1)',
+    color: '#000',
   },
+  modalHeaderSeparator: {
+    borderBottomWidth: 4,
+    borderBottomColor: 'rgb(229, 229, 229)',
+    marginBottom: 32,
+  },
+
   closeButtonText: {
     fontSize: 40,
     color: '#666',
