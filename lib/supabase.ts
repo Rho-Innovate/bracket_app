@@ -902,6 +902,78 @@ export const getUserEloForSport = async (userId: string, sportId: number) => {
 
 
 // PUT (MATCHUP)
+/**
+ * Update Elo ratings after a match result.
+ */
+export const updateEloAfterMatch = async (
+  hostUserId: string,
+  opponentUserId: string,
+  //gameId: number,
+  sportId: number,
+  result: -1 | 0 | 1 // Host loss (-1), draw (0), win (1)
+) => {
+  try {
+    // Fetch current Elo ratings
+    const { data: hostElo, error: hostError } = await supabase
+      .from('elo_ratings')
+      .select('rating')
+      .eq('id', hostUserId)
+      .eq('sport_id', sportId)
+      .single();
 
+    const { data: opponentElo, error: opponentError } = await supabase
+      .from('elo_ratings')
+      .select('rating')
+      .eq('id', opponentUserId)
+      .eq('sport_id', sportId)
+      .single();
+
+    if (hostError || opponentError) {
+      throw new Error('Error fetching player Elo ratings.');
+    }
+
+    const ratingA = hostElo.rating;
+    const ratingB = opponentElo.rating;
+    const K = 32; // Elo scaling factor
+
+    // Expected scores
+    const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+    const expectedB = 1 - expectedA; // Expected score for opponent
+
+    // Convert match result (-1, 0, 1) to score (0, 0.5, 1)
+    const scoreA = result === -1 ? 0 : result === 0 ? 0.5 : 1;
+    const scoreB = 1 - scoreA;
+
+    // Calculate new ratings
+    const newRatingA = Math.round(ratingA + K * (scoreA - expectedA));
+    const newRatingB = Math.round(ratingB + K * (scoreB - expectedB));
+
+    // Update ratings in the database
+    const { error: updateHostError } = await supabase
+      .from('elo_ratings')
+      .update({ rating: newRatingA })
+      .eq('id', hostUserId)
+      .eq('sport_id', sportId);
+
+    const { error: updateOpponentError } = await supabase
+      .from('elo_ratings')
+      .update({ rating: newRatingB })
+      .eq('id', opponentUserId)
+      .eq('sport_id', sportId);
+
+    if (updateHostError || updateOpponentError) {
+      throw new Error('Error updating Elo ratings.');
+    }
+
+    return {
+      message: 'Elo ratings updated successfully',
+      host_new_rating: newRatingA,
+      opponent_new_rating: newRatingB,
+    };
+  } catch (error) {
+    console.error('Unexpected error updating Elo ratings:', error);
+    throw error;
+  }
+};
 
 
