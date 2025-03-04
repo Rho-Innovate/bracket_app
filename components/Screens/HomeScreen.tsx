@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing, Dimensions } from 'react-native';
 import { RootStackParamList } from '../../App';
 import ActiveGameJoinRequests from './ActiveGameJoinRequests';
+import HostGameJoinRequests from './HostGameJoinRequests';
 import { Text as Text } from '../text';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
@@ -30,6 +31,8 @@ const [isModalVisible, setIsModalVisible] = useState(false);
 const [searchQuery, setSearchQuery] = useState('');
 const [session, setSession] = useState<Session | null>(null);
 const [searchBarFocused, setSearchBarFocused] = useState(false);
+const [isHostModalVisible, setIsHostModalVisible] = useState(false);
+
 
 
 useEffect(() => {
@@ -173,6 +176,64 @@ const filteredEvents = events.filter(event =>
   const placeholderTextColor = searchBarFocused ? "rgba(100, 116, 139, .48)" : "#000";
   const searchBarFontSize = searchBarFocused ? 14 : 32;
 
+  const hostOpacity = useRef(new Animated.Value(0)).current;
+  const hostTranslateY = useRef(new Animated.Value(100)).current;
+
+  const fadeInHost = () => {
+    hostOpacity.setValue(0);
+    hostTranslateY.setValue(5000);
+    Animated.parallel([
+      Animated.timing(hostOpacity, {
+        toValue: 1,
+        duration: 300,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(hostTranslateY, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const fadeOutHost = () => {
+    Animated.parallel([
+      Animated.timing(hostOpacity, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+      Animated.timing(hostTranslateY, {
+        toValue: 5000,
+        duration: 300,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsHostModalVisible(false);
+    });
+  };
+
+  // Add animated styles for host modal
+  const animatedHostOverlayStyle = {
+    opacity: hostOpacity,
+  };
+
+  const animatedHostContentStyle = {
+    transform: [{ translateY: hostTranslateY }],
+  };
+
+  // Add useEffect for host modal animation
+  useEffect(() => {
+    if (isHostModalVisible) {
+      fadeInHost();
+    }
+  }, [isHostModalVisible]);
+
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -209,6 +270,12 @@ const filteredEvents = events.filter(event =>
             ) : (
               <Text style={styles.refreshButtonText}>⟳</Text>
             )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.hostEventsButton}
+            onPress={() => setIsHostModalVisible(true)}
+          >
+            <Text style={styles.hostEventsButtonText}>Host</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -315,6 +382,26 @@ const filteredEvents = events.filter(event =>
           </Animated.View>
         </Animated.View>
       </Modal>
+      <Modal
+        animationType="none"
+        transparent={true}
+        visible={isHostModalVisible}
+        onRequestClose={fadeOutHost}
+      >
+        <Animated.View style={[styles.modalOverlay, animatedHostOverlayStyle]}>
+          <Animated.View style={[styles.modalContent, animatedHostContentStyle]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>My Hosted Events</Text>
+              <TouchableOpacity onPress={fadeOutHost}>
+                <Text style={styles.closeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalHeaderSeparator} />
+            {session && <HostGameJoinRequests session={session} />}
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+
     </View>
   );
 }
@@ -535,7 +622,21 @@ const styles = StyleSheet.create({
   bottomContainer: {
     paddingHorizontal: 28,
     paddingBottom: 20,
-  }
+  },
+  hostEventsButton: {
+    backgroundColor: 'rgba(1, 61, 90, 0.08)',
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hostEventsButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
 
 export default HomeScreen;

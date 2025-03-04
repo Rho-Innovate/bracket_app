@@ -40,13 +40,35 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
   const loadRequests = async () => {
     try {
       setLoading(true);
-      // E.g. get all join requests where the host_id = hostUserId
-      const gameRequests = await getGameRequests({creator_id: hostUserId});
+      console.log('Loading requests for host:', hostUserId);
+  
+      // First get all games created by this host
+      const gameRequests = await getGameRequests({ creator_id: hostUserId });
+      console.log('Host games:', gameRequests);
+  
+      if (!gameRequests || gameRequests.length === 0) {
+        console.log('No games found for host');
+        setRequests([]);
+        return;
+      }
+  
+      // Get IDs of host's games
       const gameRequestIds = gameRequests.map((g) => g.id);
-      
-
-      const data = await getJoinRequests(null, hostUserId, {game_request_ids: gameRequestIds});
-      setRequests(data);
+      console.log('Game request IDs:', gameRequestIds);
+  
+      // Get join requests for these specific games
+      const data = await getJoinRequests(null, hostUserId, {
+        game_request_ids: gameRequestIds
+      });
+  
+      // Additional filter to ensure we only show requests for host's games
+      const filteredRequests = data.filter(request => 
+        gameRequestIds.includes(request.game_request_id)
+      );
+  
+      console.log('Filtered requests:', filteredRequests);
+      setRequests(filteredRequests);
+  
     } catch (error) {
       console.error('Error:', error);
       Alert.alert('Error', 'Failed to load host join requests');
