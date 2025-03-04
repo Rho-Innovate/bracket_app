@@ -417,6 +417,7 @@ export const searchGameRequests_ = async (filters: {
 };
 
 export const getGameRequests = async (filters: {
+  id?: string;
   location?: { lat: number; lng: number };
   creator_id?: string;
   square_radius?: number; // Instead of circular radius, this defines the bounding box size
@@ -434,6 +435,9 @@ export const getGameRequests = async (filters: {
     let query = supabase.from('game_requests').select('*');
 
     // Apply filters
+    if(filters.id) {
+      query = query.eq('id', filters.id)
+    }
     if(filters.creator_id) {
       query = query.eq('creator_id', filters.creator_id)
     }
