@@ -280,7 +280,7 @@ export const createGameRequest = async (gameData: {
  * Modifies an existing game request
  */
 export const modifyGameRequest = async (
-  gameId: number,
+  gameId: string,
   creatorId: string,
   updates: Partial<{
     sport_id: number;
@@ -502,7 +502,7 @@ export const getGameRequests = async (filters: {
 };
 
 //Lowkey Useless
-export const joinGameRequest = async (gameId: number) => {
+export const joinGameRequest = async (gameId: string) => {
   try {
     // Get current game data
     const { data: game, error: fetchError } = await supabase
@@ -542,7 +542,7 @@ export const joinGameRequest = async (gameId: number) => {
 /**
  * Delete a game request.
  */
-export const deleteGameRequest = async (gameId: number, creatorId: string) => {
+export const deleteGameRequest = async (gameId: string, creatorId: string) => {
   try {
     // Fetch the game request to verify the creator
     const { data: gameRequest, error: fetchError } = await supabase
@@ -584,7 +584,7 @@ export const deleteGameRequest = async (gameId: number, creatorId: string) => {
  * Create a join request for a game request.
  * Ensures that the same user cannot request to join the same game more than once.
  */
-export const createJoinRequest = async (gameRequestId: number, userId: string) => {
+export const createJoinRequest = async (gameRequestId: string, userId: string) => {
   try {
     // Check if the user has already made a join request for this game_request_id
     const { data: existingRequest, error: fetchError } = await supabase
@@ -631,7 +631,7 @@ export const createJoinRequest = async (gameRequestId: number, userId: string) =
 /**
  * Retrieve join requests with optional filters.
  */
-export const getJoinRequests = async (p0: null, hostUserId: string, filters: { game_request_ids?: number[]; user_id?: string} ) => {
+export const getJoinRequests = async (filters: { game_request_ids?: string[]; user_id?: string} ) => {
   try {
     let query = supabase.from('join_requests').select('*');
     //query = query.eq('user_id', hostUserId)
@@ -663,7 +663,7 @@ export const getJoinRequests = async (p0: null, hostUserId: string, filters: { g
 /**
  * Delete a join request.
  */
-export const deleteJoinRequest = async (joinRequestId: number, userId: string) => {
+export const deleteJoinRequest = async (joinRequestId: string, userId: string) => {
   try {
     // Ensure the join request belongs to the user
     const { data: joinRequest, error: fetchError } = await supabase
@@ -700,7 +700,7 @@ export const deleteJoinRequest = async (joinRequestId: number, userId: string) =
  * Update join request status (Accepted or Rejected) and update player count accordingly.
  */
 export const updateJoinRequestStatus = async (
-  joinRequestId: number,
+  joinRequestId: string,
   hostId: string,
   newStatus: 'Accepted' | 'Rejected'
 ) => {
