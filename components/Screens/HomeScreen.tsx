@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     // borderColor: '#ccc',
     // borderWidth: 2,
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     paddingVertical: 12,
     fontSize: 14,
     letterSpacing: -0.4,
