@@ -372,61 +372,6 @@ interface GameRequest {
   current_players: number;
   distance: number; // This is added by the Postgres function
 }
-export const searchGameRequests = async (filters: {
-  location: { lat: number; lng: number };
-  radius: number;
-  sport_id?: number;
-  requested_time_from?: string;
-  requested_time_to?: string;
-  status?: 'Open' | 'Closed';
-  sort_by?: 'recency' | 'max_players';
-  sort_order?: 'asc' | 'desc';
-}): Promise<GameRequest[]> => {
-  try {
-    const { data, error } = await supabase.rpc<
-      any, // Allow flexibility in the return type
-      {
-        user_longitude: number;
-        user_latitude: number;
-        radius: number;
-        sport_filter?: number | null;
-        status_filter?: string | null;
-        time_from?: string | null;
-        time_to?: string | null;
-      }
-    >('search_game_requests', {
-      user_longitude: filters.location.lng,
-      user_latitude: filters.location.lat,
-      radius: filters.radius,
-      sport_filter: filters.sport_id || null,
-      status_filter: filters.status || null,
-      time_from: filters.requested_time_from || null,
-      time_to: filters.requested_time_to || null,
-    });
-
-    if (error) {
-      console.error('Error searching for game requests:', error.message);
-      throw error;
-    }
-
-    // Cast the response data to GameRequest[]
-    const gameRequests = data as GameRequest[];
-
-    // Apply sorting if needed
-    if (filters.sort_by === 'max_players') {
-      gameRequests.sort((a, b) =>
-        filters.sort_order === 'asc'
-          ? a.max_players - b.max_players
-          : b.max_players - a.max_players
-      );
-    }
-
-    return gameRequests;
-  } catch (error) {
-    console.error('Unexpected error searching for game requests:', error);
-    throw error;
-  }
-};
 
 export const getGameRequests = async (filters: {
   location?: { lat: number; lng: number };

@@ -1,4 +1,4 @@
-import { createJoinRequest, searchGameRequests, joinGameRequest } from '@/lib/supabase';
+import { createJoinRequest, getGameRequests, joinGameRequest } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing, Dimensions } from 'react-native';
@@ -41,7 +41,7 @@ useEffect(() => {
 
   const fetchEvents = async () => {
     try {
-      const fetchedEvents = await searchGameRequests({
+      const fetchedEvents = await getGameRequests({
         status: 'Open',
         sort_by: 'recency',
         sort_order: 'desc',
@@ -49,7 +49,6 @@ useEffect(() => {
           lat: 47.606209,
           lng: 122.332069
         },
-        radius: 0
       });
 
       setEvents(fetchedEvents);
