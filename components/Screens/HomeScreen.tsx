@@ -80,12 +80,12 @@ const handleJoinEvent = async (eventId: number) => {
 
     // First create the join request
     console.log('Calling createJoinRequest...');
-    const joinResult = await createJoinRequest(eventId, session.user.id);
+    const joinResult = await createJoinRequest(eventId.toString(), session.user.id);
     console.log('Response from createJoinRequest:', joinResult);
 
     // Then update the player count - HELLA BOOF NEED SOME OTHER ROUTE TO UPDATE PLAYER SCORE INSTEAD OF THIS WACK SHIT
     console.log('Calling joinGameRequest...');
-    const gameResult = await joinGameRequest(eventId);
+    const gameResult = await joinGameRequest(eventId.toString());
     console.log('Response from joinGameRequest:', gameResult);
 
     // Update the UI to show both changes
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     paddingHorizontal: 28,
-    marginTop: 22.25,
+    // marginTop: 16,
     marginBottom: 16,
   },
   headerText: {
@@ -338,20 +338,12 @@ const styles = StyleSheet.create({
     color: '000',
   },
   headerSeparator: {
-    borderBottomWidth: 4,
-    borderBottomColor: 'rgb(229, 229, 229)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(1, 1, 1, .02)',
     // marginBottom: 32,
   },
-  header: {
-    paddingHorizontal: 28,
-    paddingTop: 120,
-    backgroundColor: 'transparent',
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
   myEventsButton: {
-    backgroundColor: '#rgba(39, 75, 13, 0.08)',
+    backgroundColor: '#rgba(1, 1, 1, .02)',
     height: 50,
     width: 50,
     borderRadius: 25,
@@ -387,7 +379,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat',
     fontWeight: '500',
     color: '#000',
-    backgroundColor: '#rgba(1, 1, 1, .08)',
+    backgroundColor: '#rgba(1, 1, 1, .02)',
   },
   scrollContent: {
     paddingBottom: 20,
@@ -404,7 +396,7 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
     paddingTop: 4,
     marginLeft: 8,
-    backgroundColor: '#rgba(1, 61, 90, .08)',
+    backgroundColor: '#rgba(1, 1, 1, .02)',
     justifyContent: 'center',
     alignItems: 'center',
     // borderColor: 'rgba(39, 75, 13, 0.28)',
