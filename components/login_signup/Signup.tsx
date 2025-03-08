@@ -21,7 +21,8 @@ type EmailSignupProps = {
 export default function Signup({ visible, onClose }: EmailSignupProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const[lastName, setLastName] = useState('');
 
   const handleSignUp = async () => {
     try {
@@ -30,7 +31,8 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
         password,
         options: {
           data: {
-            full_name: fullName,
+            first_name: firstName,
+            last_name: lastName
           }
         }
       });
@@ -77,8 +79,8 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
           <TextInput 
             style={styles.input} 
             placeholder="First Name" 
-            value={fullName} 
-            onChangeText={setFullName} 
+            value={firstName} 
+            onChangeText={setFirstName} 
             placeholderTextColor="#B0B0B0"
           />
 
@@ -86,8 +88,8 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
           <TextInput 
             style={styles.input} 
             placeholder="Last Name" 
-            value={fullName} 
-            onChangeText={setFullName} 
+            value={lastName} 
+            onChangeText={setLastName} 
             placeholderTextColor="#B0B0B0"
           />
 
