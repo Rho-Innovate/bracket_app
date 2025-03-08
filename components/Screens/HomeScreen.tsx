@@ -1,4 +1,4 @@
-import { createJoinRequest, getGameRequests, joinGameRequest } from '@/lib/supabase';
+import { createJoinRequest, getGameRequests } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing, Dimensions } from 'react-native';
@@ -82,19 +82,13 @@ const handleJoinEvent = async (eventId: number) => {
     const joinResult = await createJoinRequest(eventId, session.user.id);
     console.log('Response from createJoinRequest:', joinResult);
 
-    // Then update the player count - HELLA BOOF NEED SOME OTHER ROUTE TO UPDATE PLAYER SCORE INSTEAD OF THIS WACK SHIT
-    console.log('Calling joinGameRequest...');
-    const gameResult = await joinGameRequest(eventId);
-    console.log('Response from joinGameRequest:', gameResult);
-
     // Update the UI to show both changes
     setEvents((prevEvents) =>
       prevEvents.map((event) => {
         if (event.id === eventId) {
           return {
             ...event,
-            has_requested: true,
-            current_players: gameResult.current_players // Update player count
+            has_requested: true
           };
         }
         return event;
