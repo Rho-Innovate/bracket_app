@@ -8,23 +8,57 @@ import {
   Image,
   StyleSheet,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  Alert
 } from "react-native";
 import { Button } from "@rneui/themed";
 import { Dropdown } from 'react-native-element-dropdown';
+import { signUpAndCreateProfile } from "@/lib/supabase";
 
-export default function ProfileCreation() {
+type ProfileCreationProps = {
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string,
+  visible: boolean;
+  onClose: () => void;
+};
+
+
+export default function ProfileCreation({email, password, firstName, lastName, visible, onClose}: ProfileCreationProps) {
   const [playerName, setPlayerName] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [bio, setBio] = useState("");
-  const [gender, setGender] = useState(null);
+  const [age, setAge] = useState(18);
+  const [gender, setGender] = useState('other');
 
   const genderOptions = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
-    { label: 'Non-binary', value: 'non-binary' },
     { label: 'Other', value: 'other' },
   ];
+
+  const handleProfileCreation = async () => {
+    try {
+      const profileData = {
+        username: playerName,
+        first_name: firstName,
+        last_name: lastName,
+        age: age,
+        gender: gender,
+        location: {
+          lat: 47.606209,
+          lng: 122.332069
+        }
+      }
+      const data = await signUpAndCreateProfile(email, password, profileData);
+      onClose();
+      return data
+    }
+    catch(error) {
+      Alert.alert('Error', 'Issue in handleProfileCreation.');
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -98,7 +132,7 @@ export default function ProfileCreation() {
         />
 
         {/* Create Account Button */}
-        <TouchableOpacity style={styles.createButton}>
+        <TouchableOpacity style={styles.createButton} onPress={handleProfileCreation}>
           <Text style={styles.createButtonText}>CREATE ACCOUNT</Text>
         </TouchableOpacity>
       </ScrollView>

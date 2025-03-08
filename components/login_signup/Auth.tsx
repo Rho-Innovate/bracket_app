@@ -15,7 +15,7 @@ import {
   Easing,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
-import EmailSignup from './Signup';
+import Signup from './Signup';
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -157,7 +157,7 @@ export default function Auth() {
         </Modal>
       )}
       {showEmailSignup && (
-        <EmailSignup
+        <Signup
           visible={showEmailSignup}
           onClose={() => setShowEmailSignup(false)}
         />

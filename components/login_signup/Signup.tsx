@@ -12,6 +12,7 @@ import {
   Image
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import ProfileCreation from './ProfileCreation';
 
 type EmailSignupProps = {
   visible: boolean;
@@ -23,6 +24,7 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const[lastName, setLastName] = useState('');
+  const [showProfileCreation, setShowProfileCreation] = useState(false);
 
   const handleSignUp = async () => {
     try {
@@ -117,6 +119,18 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
           <TouchableOpacity style={styles.continueButton} onPress={handleSignUp}>
             <Text style={styles.continueButtonText}>CONTINUE</Text>
           </TouchableOpacity>
+          {showProfileCreation && (
+            <ProfileCreation 
+              email={email}
+              password={password}
+              firstName={firstName}
+              lastName={lastName}
+              visible={visible}
+              onClose={onClose}
+            />
+          )
+
+          }
 
           {/* OR Divider */}
           <View style={styles.orContainer}>
