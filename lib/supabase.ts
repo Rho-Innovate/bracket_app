@@ -360,20 +360,6 @@ export const fetchOwnGameRequests = async (creatorId: string) => {
 /**
  * Search for game requests based on filters, radius, and sorting criteria.
  */
-interface GameRequest {
-  id: number;
-  creator_id: string;
-  sport_id: number;
-  location: string; // This is a geometry(Point, 4326) type; you may process it further if needed
-  requested_time: string;
-  status: 'Open' | 'Closed';
-  description: string;
-  max_players: number;
-  current_players: number;
-  distance: number; // This is added by the Postgres function
-}
-
-
 export const getGameRequests = async (filters: {
   location?: { lat: number; lng: number };
   creator_id?: string;
@@ -442,43 +428,6 @@ export const getGameRequests = async (filters: {
     throw error;
   }
 };
-
-//Lowkey Useless
-export const joinGameRequest = async (gameId: number) => {
-  try {
-    // Get current game data
-    const { data: game, error: fetchError } = await supabase
-      .from("game_requests")
-      .select("*")
-      .eq("id", gameId)
-      .single();
-
-    if (fetchError) throw new Error(fetchError.message);
-
-    // Prevent overbooking
-    if (game.current_players >= game.max_players) {
-      throw new Error("Game is full.");
-    }
-
-    // Update current players
-    const updatedPlayers = game.current_players + 1;
-
-    const { data, error: updateError } = await supabase
-      .from("game_requests")
-      .update({ current_players: updatedPlayers })
-      .eq("id", gameId)
-      .select()
-      .single();
-
-    if (updateError) throw new Error(updateError.message);
-
-    return data; // Return updated event
-  } catch (error) {
-    console.error("Error joining game request:", error);
-    throw error;
-  }
-};
-
 
 //DELETE
 /**
