@@ -14,6 +14,7 @@ import {
 import { Button } from "@rneui/themed";
 import { Dropdown } from 'react-native-element-dropdown';
 import { signUpAndCreateProfile } from "@/lib/supabase";
+import { supabase } from '../../lib/supabase';
 
 type ProfileCreationProps = {
   email: string,
@@ -52,6 +53,13 @@ export default function ProfileCreation({email, password, firstName, lastName, v
         }
       }
       const data = await signUpAndCreateProfile(email, password, profileData);
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+              email,
+              password
+            });
+
+      if (signInError) throw signInError;
+      
       onClose();
       return data
     }

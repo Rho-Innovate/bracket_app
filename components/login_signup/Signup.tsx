@@ -28,15 +28,10 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
 
   const handleSignUp = async () => {
     try {
+      /*
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName
-          }
-        }
       });
 
       if (signUpError) throw signUpError;
@@ -47,6 +42,8 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
       });
 
       if (signInError) throw signInError;
+      */
+      setShowProfileCreation(true);
 
       Alert.alert('Success', 'Account created and logged in successfully!');
     } catch (error) {
@@ -66,7 +63,7 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
           <Image source={require("../../assets/images/logo.png")} style={styles.logo} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {!showProfileCreation && (<ScrollView contentContainerStyle={styles.scrollContainer}>
           
           {/* Sign Up Title */}
           <Text style={styles.title}>SIGN UP</Text>
@@ -119,18 +116,7 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
           <TouchableOpacity style={styles.continueButton} onPress={handleSignUp}>
             <Text style={styles.continueButtonText}>CONTINUE</Text>
           </TouchableOpacity>
-          {showProfileCreation && (
-            <ProfileCreation 
-              email={email}
-              password={password}
-              firstName={firstName}
-              lastName={lastName}
-              visible={visible}
-              onClose={onClose}
-            />
-          )
-
-          }
+          
 
           {/* OR Divider */}
           <View style={styles.orContainer}>
@@ -151,7 +137,18 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
             Already have an account? <Text style={styles.loginLink}>Log In</Text>
           </Text>
 
-        </ScrollView>
+        </ScrollView>)}
+        {showProfileCreation && (
+            <ProfileCreation 
+              email={email}
+              password={password}
+              firstName={firstName}
+              lastName={lastName}
+              visible={visible}
+              onClose={onClose}
+            />
+          )
+          }
       </SafeAreaView>
     </Modal>
   );
