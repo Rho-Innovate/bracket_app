@@ -5,11 +5,17 @@ import React from 'react';
 import Auth from '../components/login_signup/Auth';
 import ActiveGameJoinRequests from '../components/Screens/ActiveGameJoinRequests';
 import { supabase } from '../lib/supabase';
+<<<<<<< HEAD
+import Navigation from '../components/Login Nav';
+import { NavigationIndependentTree } from '@react-navigation/native';
+import LoadingScreen from '../components/LoadingScreen';
+=======
 import LoginNav from '../components/login_signup/Login Nav';
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+>>>>>>> 6c7d2b9fb509f14193091e0bea1fddd2f3c3ad6c
 
 export default function Page() {
   const [session, setSession] = useState<Session | null>(null);
