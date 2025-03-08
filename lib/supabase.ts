@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createClient } from '@supabase/supabase-js'
+import { decode } from 'base64-arraybuffer'
 
 // Replace these with your actual Supabase URL and anon key from the Supabase dashboard
 const supabaseUrl = 'https://utreebqeudeznsggsbry.supabase.co'
@@ -128,10 +129,21 @@ export const deleteUserAccount = async () => {
 
 //Profile queries
 
-//PUT
-/**
- * Updates a user's profile.
- */
+// Update the Profile interface
+interface Profile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  avatar_url?: string;
+  description?: string;
+  sports_preferences?: Array<{
+    sport: string;
+    skill_level: string;
+    years_experience: number;
+  }>;
+}
+
+// Update the updateProfile function type
 export const updateProfile = async (
   id: string,
   profileData: Partial<{
@@ -141,6 +153,13 @@ export const updateProfile = async (
     age: number;
     gender: string;
     location: { lat: number; lng: number };
+    description: string;
+    avatar_url: string;
+    sports_preferences: Array<{
+      sport: string;
+      skill_level: string;
+      years_experience: number;
+    }>;
   }>
 ) => {
   const { location, ...rest } = profileData;
@@ -341,92 +360,74 @@ export const fetchOwnGameRequests = async (creatorId: string) => {
 /**
  * Search for game requests based on filters, radius, and sorting criteria.
  */
-export const searchGameRequests = async (filters: {
-  sport_id?: number
-  requested_time_from?: string
-  requested_time_to?: string
-  status?: "Open" | "Closed"
-  sort_by?: "recency" | "max_players"
-  sort_order?: "asc" | "desc"
+export const getGameRequests = async (filters: {
+  location?: { lat: number; lng: number };
+  creator_id?: string;
+  square_radius?: number; // Instead of circular radius, this defines the bounding box size
+  sport_id?: number;
+  requested_time_from?: string;
+  requested_time_to?: string;
+  status?: 'Open' | 'Closed';
+  sort_by?: 'recency' | 'max_players';
+  sort_order?: 'asc' | 'desc';
 }) => {
   try {
-    let query = supabase.from("game_requests").select("*"); // ✅ Fetch all columns directly
+    // Calculate bounding box (square)
+    
+    // Base query
+    let query = supabase.from('game_requests').select('*');
 
     // Apply filters
+    if(filters.creator_id) {
+      query = query.eq('creator_id', filters.creator_id)
+    }
     if (filters.sport_id) {
-      query = query.eq("sport_id", filters.sport_id);
+      query = query.eq('sport_id', filters.sport_id);
     }
-
     if (filters.requested_time_from) {
-      query = query.gte("requested_time", filters.requested_time_from);
+      query = query.gte('requested_time', filters.requested_time_from);
     }
-
     if (filters.requested_time_to) {
-      query = query.lte("requested_time", filters.requested_time_to);
+      query = query.lte('requested_time', filters.requested_time_to);
     }
-
     if (filters.status) {
-      query = query.eq("status", filters.status);
+      query = query.eq('status', filters.status);
     }
 
-    // Sorting
-    if (filters.sort_by === "recency") {
-      query = query.order("requested_time", { ascending: filters.sort_order === "asc" });
-    } else if (filters.sort_by === "max_players") {
-      query = query.order("max_players", { ascending: filters.sort_order === "asc" });
+    // Apply bounding box filter for location (square radius)
+    if (filters.square_radius && filters.location){
+      const lat_min = filters.location.lat - filters.square_radius;
+      const lat_max = filters.location.lat + filters.square_radius;
+      const lng_min = filters.location.lng - filters.square_radius;
+      const lng_max = filters.location.lng + filters.square_radius;
+
+      query = query
+        .gte('ST_Y(location)', lat_min) // Latitude >= lat_min
+        .lte('ST_Y(location)', lat_max) // Latitude <= lat_max
+        .gte('ST_X(location)', lng_min) // Longitude >= lng_min
+        .lte('ST_X(location)', lng_max); // Longitude <= lng_max
+    }
+    // Apply sorting
+    if (filters.sort_by === 'recency') {
+      query = query.order('requested_time', { ascending: filters.sort_order === 'asc' });
+    } else if (filters.sort_by === 'max_players') {
+      query = query.order('max_players', { ascending: filters.sort_order === 'asc' });
     }
 
     // Fetch data
     const { data, error } = await query;
 
     if (error) {
-      console.error("Error searching for game requests:", error.message);
+      console.error('Error searching for game requests:', error.message);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error("Unexpected error searching for game requests:", error);
+    console.error('Unexpected error searching for game requests:', error);
     throw error;
   }
 };
-
-export const joinGameRequest = async (gameId: number) => {
-  try {
-    // Get current game data
-    const { data: game, error: fetchError } = await supabase
-      .from("game_requests")
-      .select("*")
-      .eq("id", gameId)
-      .single();
-
-    if (fetchError) throw new Error(fetchError.message);
-
-    // Prevent overbooking
-    if (game.current_players >= game.max_players) {
-      throw new Error("Game is full.");
-    }
-
-    // Update current players
-    const updatedPlayers = game.current_players + 1;
-
-    const { data, error: updateError } = await supabase
-      .from("game_requests")
-      .update({ current_players: updatedPlayers })
-      .eq("id", gameId)
-      .select()
-      .single();
-
-    if (updateError) throw new Error(updateError.message);
-
-    return data; // Return updated event
-  } catch (error) {
-    console.error("Error joining game request:", error);
-    throw error;
-  }
-};
-
-
 
 //DELETE
 /**
@@ -467,11 +468,419 @@ export const deleteGameRequest = async (gameId: number, creatorId: string) => {
   }
 };
 
-//POST
-//Uses a User ID and additional data to post a game onto the app's feed
+
+// Join Request Queries
+
+/**
+ * Create a join request for a game request.
+ * Ensures that the same user cannot request to join the same game more than once.
+ */
+export const createJoinRequest = async (gameRequestId: number, userId: string) => {
+  try {
+    // Check if the user has already made a join request for this game_request_id
+    const { data: existingRequest, error: fetchError } = await supabase
+      .from('join_requests')
+      .select('id')
+      .eq('game_request_id', gameRequestId)
+      .eq('user_id', userId)
+      .single(); // Use single() to retrieve at most one row
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // Ignore "No rows found" error (PGRST116) since it means the user hasn't joined yet
+      console.error('Error checking existing join request:', fetchError.message);
+      throw fetchError;
+    }
+
+    // If a join request already exists, prevent duplicate submissions
+    if (existingRequest) {
+      throw new Error('You have already requested to join this game.');
+    }
+
+    // Insert new join request
+    const { data, error } = await supabase.from('join_requests').insert([
+      {
+        game_request_id: gameRequestId,
+        user_id: userId,
+        status: 'Pending',
+        requested_at: new Date().toISOString(), // Set current timestamp
+      },
+    ]);
+
+    if (error) {
+      console.error('Error creating join request:', error.message);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error creating join request:', error);
+    throw error;
+  }
+};
+
+//GET
+/**
+ * Retrieve join requests with optional filters.
+ */
+export const getJoinRequests = async (p0: null, hostUserId: string, filters: { game_request_ids?: number[]; user_id?: string} ) => {
+  try {
+    let query = supabase.from('join_requests').select('*');
+    //query = query.eq('user_id', hostUserId)
 
 
+    if (filters.game_request_ids && filters.game_request_ids.length > 0) {
+      query = query.in('game_request_id', filters.game_request_ids);
+    }
 
-//
+    if (filters.user_id) {
+      query = query.eq('user_id', filters.user_id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching join requests:', error.message);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error fetching join requests:', error);
+    throw error;
+  }
+};
+
+//DELETE
+/**
+ * Delete a join request.
+ */
+export const deleteJoinRequest = async (joinRequestId: number, userId: string) => {
+  try {
+    // Ensure the join request belongs to the user
+    const { data: joinRequest, error: fetchError } = await supabase
+      .from('join_requests')
+      .select('user_id')
+      .eq('id', joinRequestId)
+      .single();
+
+    if (fetchError || !joinRequest) {
+      throw new Error('Join request not found');
+    }
+
+    if (joinRequest.user_id !== userId) {
+      throw new Error('You are not authorized to delete this join request');
+    }
+
+    // Proceed to delete the join request
+    const { error } = await supabase.from('join_requests').delete().eq('id', joinRequestId);
+
+    if (error) {
+      console.error('Error deleting join request:', error.message);
+      throw error;
+    }
+
+    return { message: 'Join request deleted successfully' };
+  } catch (error) {
+    console.error('Unexpected error deleting join request:', error);
+    throw error;
+  }
+};
+
+//UPDATE
+/**
+ * Update join request status (Accepted or Rejected) and update player count accordingly.
+ */
+export const updateJoinRequestStatus = async (
+  joinRequestId: number,
+  hostId: string,
+  newStatus: 'Accepted' | 'Rejected'
+) => {
+  try {
+    // Fetch the join request and related game request
+    const { data: joinRequest, error: fetchError } = await supabase
+      .from('join_requests')
+      .select('game_request_id, user_id, status')
+      .eq('id', joinRequestId)
+      .single();
+
+    if (fetchError || !joinRequest) {
+      throw new Error('Join request not found');
+    }
+
+    // Fetch the game request and verify the host is updating the request
+    const { data: gameRequest, error: gameFetchError } = await supabase
+      .from('game_requests')
+      .select('creator_id, current_players, max_players')
+      .eq('id', joinRequest.game_request_id)
+      .single();
+
+    if (gameFetchError || !gameRequest) {
+      throw new Error('Game request not found');
+    }
+
+    if (gameRequest.creator_id !== hostId) {
+      throw new Error('You are not authorized to update this join request');
+    }
+
+    // Track whether the player count should be updated
+    let playerCountChange = 0;
+
+    // Handle status change logic
+    if (newStatus === 'Accepted' && joinRequest.status === 'Pending') {
+      // Accepting a new user
+      if (gameRequest.current_players >= gameRequest.max_players) {
+        throw new Error('Game request is already full');
+      } 
+      playerCountChange = 1;
+    } else if (newStatus === 'Rejected' && joinRequest.status === 'Accepted') {
+      // Changing from Accepted to Rejected, decrease player count
+      playerCountChange = -1;
+    }
+
+    // Update the join request status
+    const { error: updateError } = await supabase
+      .from('join_requests')
+      .update({ status: newStatus })
+      .eq('id', joinRequestId);
+
+    if (updateError) {
+      throw new Error(`Error updating join request status: ${updateError.message}`);
+    }
+
+    // Update the player count if necessary
+    if (playerCountChange !== 0) {
+      const { error: playerUpdateError } = await supabase
+        .from('game_requests')
+        .update({ current_players: gameRequest.current_players + playerCountChange })
+        .eq('id', joinRequest.game_request_id);
+
+      if (playerUpdateError) {
+        throw new Error(`Error updating player count: ${playerUpdateError.message}`);
+      }
+    }
+
+    return { message: `Join request has been ${newStatus.toLowerCase()}` };
+  } catch (error) {
+    console.error('Unexpected error updating join request status:', error);
+    throw error;
+  }
+};
+
+// Add this new function to handle avatar uploads
+export const uploadAvatar = async (userId: string, base64Image: string) => {
+  try {
+    const filePath = `${userId}/avatar.jpg`;
+    
+    // Upload the image to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, decode(base64Image), {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get the public URL - Updated method
+    const { data: urlData } = await supabase.storage
+      .from('avatars')
+      .createSignedUrl(filePath, 31536000); // URL valid for 1 year
+
+    if (!urlData?.signedUrl) {
+      throw new Error('Failed to get signed URL');
+    }
+
+    const avatarUrl = urlData.signedUrl;
+    console.log('Generated signed URL:', avatarUrl);
+
+    // Update the profile with the new avatar URL
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', userId);
+
+    if (updateError) throw updateError;
+
+    return avatarUrl;
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+    throw error;
+  }
+};
+
+/*
+* Elo Routes
+*/
+
+// POST
+/**
+ * Initialize a user's Elo rating for a specific sport.
+ */
+export const initializeElo = async (userId: string, sportId: number) => {
+  try {
+    // Check if Elo rating already exists for this user & sport
+    const { data: existingElo, error: checkError } = await supabase
+      .from('elo_ratings')
+      .select('id')
+      .eq('id', userId)
+      .eq('sport_id', sportId)
+      .single();
+
+    if (existingElo) {
+      throw new Error('Elo rating already exists for this sport.');
+    }
+
+    // Insert new Elo record
+    const { data, error } = await supabase.from('elo_ratings').insert([
+      {
+        id: userId, // Matches the profile ID
+        sport_id: sportId,
+        rating: 1000,
+        sigma: 30,
+        // created_at: new Date().toISOString(), // Uncomment if handling timestamps manually
+        // updated_at: new Date().toISOString(),
+      },
+    ]);
+
+    if (error) {
+      console.error('Error initializing Elo:', error.message);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error initializing Elo:', error);
+    throw error;
+  }
+};
+
+// GET
+/**
+ * Get all Elo ratings for a user, returned as a map of sport_id to rating.
+ */
+export const getUserElos = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('elo_ratings')
+      .select('sport_id, rating')
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error fetching Elo ratings:', error.message);
+      throw error;
+    }
+
+    // Convert array to a map of { sport_id: rating }
+    const eloMap: Record<number, number> = {};
+    data.forEach((entry) => {
+      eloMap[entry.sport_id] = entry.rating;
+    });
+
+    return eloMap;
+  } catch (error) {
+    console.error('Unexpected error fetching Elo ratings:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get a user's Elo rating for a specific sport.
+ */
+export const getUserEloForSport = async (userId: string, sportId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('elo_ratings')
+      .select('rating')
+      .eq('id', userId)
+      .eq('sport_id', sportId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching Elo for sport:', error.message);
+      throw error;
+    }
+
+    return data.rating; // Return the Elo rating
+  } catch (error) {
+    console.error('Unexpected error fetching Elo for sport:', error);
+    throw error;
+  }
+};
+
+
+// PUT (MATCHUP)
+/**
+ * Update Elo ratings after a match result.
+ */
+export const updateEloAfterMatch = async (
+  hostUserId: string,
+  opponentUserId: string,
+  //gameId: number,
+  sportId: number,
+  result: -1 | 0 | 1 // Host loss (-1), draw (0), win (1)
+) => {
+  try {
+    // Fetch current Elo ratings
+    const { data: hostElo, error: hostError } = await supabase
+      .from('elo_ratings')
+      .select('rating')
+      .eq('id', hostUserId)
+      .eq('sport_id', sportId)
+      .single();
+
+    const { data: opponentElo, error: opponentError } = await supabase
+      .from('elo_ratings')
+      .select('rating')
+      .eq('id', opponentUserId)
+      .eq('sport_id', sportId)
+      .single();
+
+    if (hostError || opponentError) {
+      throw new Error('Error fetching player Elo ratings.');
+    }
+
+    const ratingA = hostElo.rating;
+    const ratingB = opponentElo.rating;
+    const K = 32; // Elo scaling factor
+
+    // Expected scores
+    const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+    const expectedB = 1 - expectedA; // Expected score for opponent
+
+    // Convert match result (-1, 0, 1) to score (0, 0.5, 1)
+    const scoreA = result === -1 ? 0 : result === 0 ? 0.5 : 1;
+    const scoreB = 1 - scoreA;
+
+    // Calculate new ratings
+    const newRatingA = Math.round(ratingA + K * (scoreA - expectedA));
+    const newRatingB = Math.round(ratingB + K * (scoreB - expectedB));
+
+    // Update ratings in the database
+    const { error: updateHostError } = await supabase
+      .from('elo_ratings')
+      .update({ rating: newRatingA })
+      .eq('id', hostUserId)
+      .eq('sport_id', sportId);
+
+    const { error: updateOpponentError } = await supabase
+      .from('elo_ratings')
+      .update({ rating: newRatingB })
+      .eq('id', opponentUserId)
+      .eq('sport_id', sportId);
+
+    if (updateHostError || updateOpponentError) {
+      throw new Error('Error updating Elo ratings.');
+    }
+
+    return {
+      message: 'Elo ratings updated successfully',
+      host_new_rating: newRatingA,
+      opponent_new_rating: newRatingB,
+    };
+  } catch (error) {
+    console.error('Unexpected error updating Elo ratings:', error);
+    throw error;
+  }
+};
 
 

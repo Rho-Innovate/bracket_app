@@ -3,7 +3,7 @@ import { StackNavigationProp } from '@react-navigation/stack'
 import { Button, Input } from '@rneui/themed'
 import { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
-import { supabase } from '../lib/supabase'
+import { supabase, updateProfile, fetchOwnProfile } from '../../lib/supabase'
 import Avatar from './Avatar'
 import { NavigationProp, RootStackParamList } from './Login Nav'
 
@@ -54,8 +54,30 @@ export default function Account({ route }: AccountScreenProps) {
       setLoading(false)
     }
   }
+  
+  const getProfile_ = async () => {
+    try {
+      setLoading(true);
+      if (!session?.user) throw new Error('No user on the session!');
+      const data = await fetchOwnProfile(session?.user.id)
+      if (data) {
+        setFirstName(data.first_name)
+        setLastName(data.last_name)
+        setUsername(data.username)
+     
+        setAvatarUrl(data.avatar_url)
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert(error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+    
 
-  async function updateProfile({
+  async function updateProfile__({
     firstName,
     lastName,
     username,
@@ -95,6 +117,42 @@ export default function Account({ route }: AccountScreenProps) {
     }
   }
 
+  const updateProfile_ = async ({
+    firstName,
+    lastName,
+    username,
+   
+    avatar_url,
+  }: {
+    firstName: string,
+    lastName: string,
+    username: string
+    
+    avatar_url: string
+  }) => {
+    try {
+      setLoading(true);
+      if (!session?.user) throw new Error('No user on the session!');
+      const updates = {
+        id: session?.user.id,
+        firstName,
+        lastName,
+        username,
+        avatar_url,
+        updated_at: new Date(),
+      }
+
+      const data = await updateProfile(session?.user.id, updates);
+
+      console.log(data);
+    }
+    catch (error) {
+
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <View style={styles.container}>
       {/* Add Avatar component */}
@@ -104,7 +162,7 @@ export default function Account({ route }: AccountScreenProps) {
           url={avatarUrl}
           onUpload={(url: string) => {
             setAvatarUrl(url)
-            updateProfile({ firstName, lastName, username, avatar_url: url })
+            updateProfile_({ firstName, lastName, username, avatar_url: url })
           }}
         />
       </View>

@@ -1,41 +1,24 @@
 {
-  "expo": {
-    "name": "bracket_app_expo",
-    "slug": "bracket_app_expo",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.ccsekhar.bracketApp"
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.anonymous.bracket_app_expo"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      "expo-router",
-      "expo-font",
-      "expo-build-properties",
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "tsconfigPaths": true
-    }
-  }
+  "name": "bracket_app",
+  "version": "1.0.0",
+  "description": "A description of your app",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-navigation/native": "^6.0.0",
+    "@supabase/supabase-js": "^1.0.0",
+    "expo-font": "^10.0.0",
+    "expo-splash-screen": "^0.10.0",
+    "react-native": "^0.64.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
 }
