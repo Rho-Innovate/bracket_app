@@ -16,6 +16,37 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Auth queries
+export async function changeJoinRequestStatus(requestId: number, hostId: string, status: string) {
+  const { error } = await supabase
+    .from('game_join_requests')
+    .update({ status })
+    .eq('id', requestId)
+    .eq('host_id', hostId);
+  
+  if (error) throw error;
+}
+
+export async function updatePlayerCount(gameId: number, increment: number) {
+  // First, get the current player count
+  const { data: gameData, error: fetchError } = await supabase
+    .from('game_requests')
+    .select('current_players')
+    .eq('id', gameId)
+    .single();
+  
+  if (fetchError) throw fetchError;
+  
+  const newCount = (gameData.current_players || 0) + increment;
+  
+  // Update with the new count
+  const { data, error } = await supabase
+    .from('game_requests')
+    .update({ current_players: newCount })
+    .eq('id', gameId);
+  
+  if (error) throw error;
+  return data;
+}
 
 //POST
 /**
@@ -370,6 +401,7 @@ export const getGameRequests = async (filters: {
   status?: 'Open' | 'Closed';
   sort_by?: 'recency' | 'max_players';
   sort_order?: 'asc' | 'desc';
+  game_id?: number; // Added for direct lookup by ID
 }) => {
   try {
     // Calculate bounding box (square)
@@ -393,6 +425,9 @@ export const getGameRequests = async (filters: {
     if (filters.status) {
       query = query.eq('status', filters.status);
     }
+    if (filters.game_id) {
+      query = query.eq('id', filters.game_id);
+    }
 
     // Apply bounding box filter for location (square radius)
     if (filters.square_radius && filters.location){
@@ -401,11 +436,15 @@ export const getGameRequests = async (filters: {
       const lng_min = filters.location.lng - filters.square_radius;
       const lng_max = filters.location.lng + filters.square_radius;
 
-      query = query
-        .gte('ST_Y(location)', lat_min) // Latitude >= lat_min
-        .lte('ST_Y(location)', lat_max) // Latitude <= lat_max
-        .gte('ST_X(location)', lng_min) // Longitude >= lng_min
-        .lte('ST_X(location)', lng_max); // Longitude <= lng_max
+      // Temporarily disable location filtering as it might be causing issues
+      // query = query
+      //  .gte('ST_Y(location)', lat_min) // Latitude >= lat_min
+      //  .lte('ST_Y(location)', lat_max) // Latitude <= lat_max
+      //  .gte('ST_X(location)', lng_min) // Longitude >= lng_min
+      //  .lte('ST_X(location)', lng_max); // Longitude <= lng_max
+      
+      // Just log the intended filter values
+      console.log('Location filter bounds:', { lat_min, lat_max, lng_min, lng_max });
     }
     // Apply sorting
     if (filters.sort_by === 'recency') {
@@ -522,7 +561,7 @@ export const createJoinRequest = async (gameRequestId: number, userId: string) =
 /**
  * Retrieve join requests with optional filters.
  */
-export const getJoinRequests = async (p0: null, hostUserId: string, filters: { game_request_ids?: number[]; user_id?: string} ) => {
+export const getJoinRequests = async (hostUserId: string, filters: { game_request_ids?: number[]; user_id?: string; status?: string } ) => {
   try {
     let query = supabase.from('join_requests').select('*');
     //query = query.eq('user_id', hostUserId)
@@ -534,6 +573,10 @@ export const getJoinRequests = async (p0: null, hostUserId: string, filters: { g
 
     if (filters.user_id) {
       query = query.eq('user_id', filters.user_id);
+    }
+    
+    if (filters.status) {
+      query = query.eq('status', filters.status);
     }
 
     const { data, error } = await query;

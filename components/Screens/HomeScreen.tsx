@@ -1,13 +1,13 @@
 import { createJoinRequest, getGameRequests } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, Image, Animated, Easing, Dimensions } from 'react-native';
-import { RootStackParamList } from '../../App';
-import ActiveGameJoinRequests from './ActiveGameJoinRequests';
-import { Text as Text } from '../text';
 import { Session } from '@supabase/supabase-js';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Easing, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { RootStackParamList } from '../../App';
 import { supabase } from '../../lib/supabase';
-import commonStyles from '../styles';
+import { Text } from '../text';
+import ActiveGameJoinRequests from './ActiveGameJoinRequests';
+import HostGameJoinRequests from './HostGameJoinRequests';
 
 const sportIdToName: Record<number, string> = {
   1: 'Tennis',
@@ -30,6 +30,7 @@ const [isModalVisible, setIsModalVisible] = useState(false);
 const [searchQuery, setSearchQuery] = useState('');
 const [session, setSession] = useState<Session | null>(null);
 const [searchBarFocused, setSearchBarFocused] = useState(false);
+const [activeTab, setActiveTab] = useState<'myRequests' | 'hostRequests'>('myRequests');
 
 
 useEffect(() => {
@@ -39,33 +40,53 @@ useEffect(() => {
   });
 }, []);
 
-  const fetchEvents = async () => {
-    try {
-      const fetchedEvents = await getGameRequests({
-        status: 'Open',
-        sort_by: 'recency',
-        sort_order: 'desc',
-        location: {
-          lat: 47.606209,
-          lng: 122.332069
-        },
-      });
+const fetchEvents = async () => {
+  try {
+    console.log('Fetching events...');
+    
+    // Simplified query to troubleshoot loading issues
+    const fetchedEvents = await getGameRequests({
+      status: 'Open',
+      // Removing other filters temporarily
+    });
+    
+    console.log(`Fetched ${fetchedEvents.length} events successfully`);
 
-      setEvents(fetchedEvents);
+    // Refresh player counts from the backend
+    setEvents(fetchedEvents.map(event => ({
+      ...event,
+      current_players: event.current_players // Ensure the latest count is stored
+    })));
+    
+    setLoading(false);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    setEvents([]);
+    setLoading(false);
+    // Optionally show an alert
+    Alert.alert('Error', 'Could not load events. Please try again later.');
+  }
+};
+
+
+  useEffect(() => {
+    fetchEvents().finally(() => {
+      // Ensure loading is set to false regardless of outcome
+      setLoading(false);
+    });
+  }, []);
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      await fetchEvents();
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Error during refresh:', error);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  const handleRefresh = () => {
-    fetchEvents();
-  };
+  
 
 const handleJoinEvent = async (eventId: number) => {
   if (!session?.user?.id) {
@@ -210,6 +231,16 @@ const filteredEvents = events.filter(event =>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {loading ? (
           <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
+        ) : filteredEvents.length === 0 ? (
+          <View style={styles.noEventsContainer}>
+            <Text style={styles.noEventsText}>No events available</Text>
+            <TouchableOpacity 
+              style={styles.retryButton}
+              onPress={handleRefresh}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.eventsContainer}>
             {filteredEvents.map((event, index) => (
@@ -304,7 +335,45 @@ const filteredEvents = events.filter(event =>
               </TouchableOpacity>
             </View>
             <View style={styles.modalHeaderSeparator} />
-            <ActiveGameJoinRequests />
+            
+            {/* Tab Navigation */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.tabButton, 
+                  activeTab === 'myRequests' && styles.activeTabButton
+                ]}
+                onPress={() => setActiveTab('myRequests')}
+              >
+                <Text style={[
+                  styles.tabButtonText,
+                  activeTab === 'myRequests' && styles.activeTabButtonText
+                ]}>My Requests</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.tabButton, 
+                  activeTab === 'hostRequests' && styles.activeTabButton
+                ]}
+                onPress={() => setActiveTab('hostRequests')}
+              >
+                <Text style={[
+                  styles.tabButtonText,
+                  activeTab === 'hostRequests' && styles.activeTabButtonText
+                ]}>Host Requests</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Tab Content */}
+            {activeTab === 'myRequests' ? (
+              <ActiveGameJoinRequests />
+            ) : (
+              session ? <HostGameJoinRequests session={session} /> : (
+                <View style={styles.noSessionContainer}>
+                  <Text style={styles.noSessionText}>Please sign in to view host requests</Text>
+                </View>
+              )
+            )}
           </Animated.View>
         </Animated.View>
       </Modal>
@@ -528,7 +597,64 @@ const styles = StyleSheet.create({
   bottomContainer: {
     paddingHorizontal: 28,
     paddingBottom: 20,
-  }
+  },
+  noEventsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noEventsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: 'rgba(0, 0, 0, 0.64)',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#2F622A',
+    padding: 12,
+    borderRadius: 28,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  activeTabButton: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#2F622A',
+  },
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  activeTabButtonText: {
+    color: '#2F622A',
+    fontWeight: '600',
+  },
+  noSessionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  noSessionText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
 });
 
 export default HomeScreen;

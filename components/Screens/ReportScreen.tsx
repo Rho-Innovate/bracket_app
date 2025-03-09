@@ -1,18 +1,16 @@
 //Chai when you are navigating to this page pass the gameId with it so that this code can run
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import { Alert } from 'react-native';
-import { updateEloAfterMatch, getJoinRequests, initializeElo } from '../../lib/supabase';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { Session } from '@supabase/supabase-js';
-import { supabase } from '../../lib/supabase';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import {
+    Alert,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { getJoinRequests, initializeElo, supabase, updateEloAfterMatch } from '../../lib/supabase';
 
 type RouteParams = {
   ReportScreen: {
@@ -70,7 +68,7 @@ export default function ReportScreen() {
         return;
       }
       try {
-        const joinRequests = await getJoinRequests(null, session?.user?.id || '', {
+        const joinRequests = await getJoinRequests(session?.user?.id || '', {
           game_request_ids: [Number(gameRequestId)]
         });
   

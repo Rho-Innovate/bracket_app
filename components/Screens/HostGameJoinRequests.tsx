@@ -1,52 +1,85 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import {
-    getGameRequests,
-  getJoinRequests, // You’ll implement or import this from your supabase logic
-  updateJoinRequestStatus,      // Or however you update status
-} from '../../lib/supabase';
 import { Session } from '@supabase/supabase-js';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { fetchPublicProfile, getGameRequests, getJoinRequests, updateJoinRequestStatus, updatePlayerCount } from '../../lib/supabase';
 
 // Example interface for JoinRequest
 interface JoinRequest {
   id: number;
-  user_id: string;       // ID of the user who’s requesting
-  game_request_id: number;       // The host’s game ID
-  status: string;        // e.g. 'Pending', 'Accepted', 'Rejected'
-  requested_at: string;  // Datetime
-  // Optionally store user or game details if you want them shown in the list
-  // e.g. user_name: string;
-  // or game_name: string;
+  user_id: string; // ID of the user who's requesting
+  game_request_id: number; // The host's game ID
+  status: string; // e.g. 'Pending', 'Accepted', 'Rejected'
+  requested_at: string; // Datetime
+}
+
+interface GameRequest {
+  id: number;
+  sport_id: number;
+  description: string;
+  requested_time: string;
+}
+
+interface UserProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  avatar_url?: string;
 }
 
 export default function HostGameJoinRequests({ session }: { session: Session }) {
-  // Replace with how you fetch the current host’s ID
-  // For example, from session or context:
-  const hostUserId = session.user.id; 
+  const hostUserId = session.user.id;
 
   const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [games, setGames] = useState<{[key: number]: GameRequest}>({});
+  const [userProfiles, setUserProfiles] = useState<{[key: string]: UserProfile}>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // 1. Load the join requests for the host’s games
+  // Load join requests for the host's games
   const loadRequests = async () => {
     try {
       setLoading(true);
-      // E.g. get all join requests where the host_id = hostUserId
-      const gameRequests = await getGameRequests({creator_id: hostUserId});
+      const gameRequests = await getGameRequests({ creator_id: hostUserId });
       const gameRequestIds = gameRequests.map((g) => g.id);
       
+      // Create a map of games for easy lookup
+      const gamesMap: {[key: number]: GameRequest} = {};
+      gameRequests.forEach(game => {
+        gamesMap[game.id] = game;
+      });
+      setGames(gamesMap);
 
-      const data = await getJoinRequests(null, hostUserId, {game_request_ids: gameRequestIds});
+      const data = await getJoinRequests(hostUserId, { 
+        game_request_ids: gameRequestIds, 
+        status: 'Pending' 
+      });
       setRequests(data);
+      
+      // Fetch user profiles for each request
+      const userIds = [...new Set(data.map(req => req.user_id))];
+      const profilesMap: {[key: string]: UserProfile} = {};
+      
+      for (const userId of userIds) {
+        try {
+          const profile = await fetchPublicProfile(userId);
+          if (profile) {
+            profilesMap[userId] = profile;
+          }
+        } catch (error) {
+          console.error(`Error fetching profile for user ${userId}:`, error);
+        }
+      }
+      
+      setUserProfiles(profilesMap);
     } catch (error) {
       console.error('Error:', error);
       Alert.alert('Error', 'Failed to load host join requests');
@@ -60,26 +93,29 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
     loadRequests();
   }, []);
 
-  // 2. Refresh
+  // Refresh handler
   const handleRefresh = () => {
     setRefreshing(true);
     loadRequests();
   };
 
-  // 3. Accept
-  const handleAccept = async (requestId: number) => {
+  // Accept join request and update player count
+  const handleAccept = async (requestId: number, gameId: number) => {
     try {
       await updateJoinRequestStatus(requestId, session.user.id, "Accepted");
-      // Optionally show a success alert or toast
+
+      // Increase player count
+      await updatePlayerCount(gameId, 1);
+
       Alert.alert('Accepted', 'You have accepted this request.');
-      loadRequests(); // reload the list so the status updates
+      loadRequests(); // Refresh requests
     } catch (error) {
       console.error('Error accepting request:', error);
       Alert.alert('Error', 'Failed to accept request');
     }
   };
 
-  // 4. Reject
+  // Reject join request
   const handleReject = async (requestId: number) => {
     try {
       await updateJoinRequestStatus(requestId, session.user.id, "Rejected");
@@ -91,7 +127,7 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
     }
   };
 
-  // Helpers for coloring boxes & text based on status
+  // Helper styles for different statuses
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'Accepted':
@@ -99,7 +135,7 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
       case 'Rejected':
         return styles.rejectedBox;
       default:
-        return styles.grayBox;
+        return styles.pendingBox;
     }
   };
 
@@ -110,79 +146,112 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
       case 'Rejected':
         return styles.rejectedText;
       default:
-        return styles.boxText;
+        return styles.pendingText;
     }
+  };
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: 'numeric' 
+    });
   };
 
   return (
     <View style={styles.container}>
-      {/* Header / Title */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Incoming Join Requests</Text>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={handleRefresh}
-            disabled={refreshing}
-          >
-            {refreshing ? (
-              <ActivityIndicator size="small" color="#2F622A" />
-            ) : (
-              <Text style={styles.refreshButtonText}>↻</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={handleRefresh}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color="#2F622A" />
+          ) : (
+            <Text style={styles.refreshButtonText}>⟳</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
-      {/* Body */}
+      {/* Requests List */}
       <ScrollView>
         {loading ? (
           <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
         ) : requests.length === 0 ? (
-          <View style={styles.grayBox}>
-            <Text style={styles.boxText}>No one has requested to join your game yet.</Text>
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>No one has requested to join your games yet.</Text>
           </View>
         ) : (
-          requests.map((request) => (
-            <View
-              key={request.id}
-              style={[styles.grayBox, getStatusStyle(request.status)]}
-            >
-              {/* Show any relevant info about the requesting user or game */}
-              <Text style={styles.boxText}>Request ID: {request.id}</Text>
-              <Text style={styles.boxText}>Game ID: {request.game_request_id}</Text>
-              <Text style={styles.boxText}>User ID: {request.user_id}</Text>
-
-              {/* Status */}
-              <Text style={[styles.boxText, getStatusTextStyle(request.status)]}>
-                Status: {request.status}
-              </Text>
-
-              {/* Requested Date */}
-              <Text style={styles.boxText}>
-                Requested: {new Date(request.requested_at).toLocaleString()}
-              </Text>
-
-              {/* Accept / Reject Buttons if still pending */}
-              {request.status === 'Pending' && (
-                <View style={styles.actionButtonsContainer}>
-                  <TouchableOpacity
-                    style={styles.acceptButton}
-                    onPress={() => handleAccept(request.id)}
-                  >
-                    <Text style={styles.acceptButtonText}>Accept</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.rejectButton}
-                    onPress={() => handleReject(request.id)}
-                  >
-                    <Text style={styles.rejectButtonText}>Reject</Text>
-                  </TouchableOpacity>
+          requests.map((request) => {
+            const game = games[request.game_request_id];
+            const profile = userProfiles[request.user_id];
+            
+            return (
+              <View key={request.id} style={[styles.requestBox, getStatusStyle(request.status)]}>
+                {/* Game Info */}
+                <View style={styles.gameInfoContainer}>
+                  <Text style={styles.gameTitle}>
+                    {game?.description || `Game #${request.game_request_id}`}
+                  </Text>
+                  {game && (
+                    <Text style={styles.gameTime}>
+                      {formatDate(game.requested_time)}
+                    </Text>
+                  )}
                 </View>
-              )}
-            </View>
-          ))
+                
+                {/* Player Info */}
+                <View style={styles.playerInfoContainer}>
+                  {profile?.avatar_url ? (
+                    <Image 
+                      source={{ uri: profile.avatar_url }} 
+                      style={styles.avatar} 
+                    />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <Text style={styles.avatarInitial}>
+                        {profile?.first_name ? profile.first_name[0] : '?'}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  <View style={styles.playerDetails}>
+                    <Text style={styles.playerName}>
+                      {profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown Player'}
+                    </Text>
+                    <Text style={styles.requestTime}>
+                      Requested {new Date(request.requested_at).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Accept / Reject Buttons if still pending */}
+                {request.status === 'Pending' && (
+                  <View style={styles.actionButtonsContainer}>
+                    <TouchableOpacity 
+                      style={styles.rejectButton} 
+                      onPress={() => handleReject(request.id)}
+                    >
+                      <Text style={styles.rejectButtonText}>Decline</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={styles.acceptButton} 
+                      onPress={() => handleAccept(request.id, request.game_request_id)}
+                    >
+                      <Text style={styles.acceptButtonText}>Accept</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            );
+          })
         )}
       </ScrollView>
     </View>
@@ -197,42 +266,51 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2F622A',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  buttonContainer: {
-    alignItems: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#013D5A',
   },
   refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(1, 61, 90, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#2F622A',
   },
   refreshButtonText: {
-    fontSize: 24,
-    color: '#2F622A',
+    fontSize: 20,
+    color: '#013D5A',
   },
   loader: {
     marginTop: 20,
   },
-  grayBox: {
+  emptyBox: {
     backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: 20,
-    marginHorizontal: 16,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  requestBox: {
+    borderRadius: 8,
+    padding: 16,
     marginBottom: 12,
+  },
+  pendingBox: {
+    backgroundColor: '#f5f5f5',
+    borderLeftWidth: 4,
+    borderLeftColor: '#666',
   },
   acceptedBox: {
     backgroundColor: '#e7f3e8',
@@ -244,10 +322,62 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#d32f2f',
   },
-  boxText: {
+  gameInfoContainer: {
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    paddingBottom: 8,
+  },
+  gameTitle: {
     fontSize: 16,
-    color: '#666',
+    fontWeight: '600',
+    color: '#013D5A',
     marginBottom: 4,
+  },
+  gameTime: {
+    fontSize: 14,
+    color: '#666',
+  },
+  playerInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarInitial: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+  },
+  playerDetails: {
+    flex: 1,
+  },
+  playerName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
+  },
+  requestTime: {
+    fontSize: 12,
+    color: '#999',
+  },
+  pendingText: {
+    color: '#666',
   },
   acceptedText: {
     color: '#2F622A',
@@ -260,27 +390,29 @@ const styles = StyleSheet.create({
   actionButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 12,
   },
   acceptButton: {
     backgroundColor: '#2F622A',
-    padding: 8,
-    borderRadius: 5,
-    marginRight: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
+    marginLeft: 8,
   },
   acceptButtonText: {
     color: '#fff',
-    fontSize: 14,
     fontWeight: '500',
+    fontSize: 14,
   },
   rejectButton: {
-    backgroundColor: '#d32f2f',
-    padding: 8,
-    borderRadius: 5,
+    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
   },
   rejectButtonText: {
-    color: '#fff',
-    fontSize: 14,
+    color: '#d32f2f',
     fontWeight: '500',
+    fontSize: 14,
   },
 });
+

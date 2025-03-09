@@ -1,17 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Text as CustomText } from '../text';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
 import { Session } from '@supabase/supabase-js'; // Supabase session for user authentication
-import { supabase } from '../../lib/supabase';
-import { getJoinRequests, deleteJoinRequest } from '../../lib/supabase';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { deleteJoinRequest, getGameRequests, getJoinRequests, supabase } from '../../lib/supabase';
+import { Text as CustomText } from '../text';
 
 interface JoinRequest {
   id: number;
@@ -21,8 +19,17 @@ interface JoinRequest {
   requested_at: string;
 }
 
+interface GameRequest {
+  id: number;
+  sport_id: number;
+  description: string;
+  requested_time: string;
+  creator_id: string;
+}
+
 export default function ActiveGameJoinRequests() {
   const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [gameDetails, setGameDetails] = useState<{[key: number]: GameRequest}>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -47,7 +54,9 @@ export default function ActiveGameJoinRequests() {
     
     try {
       console.log('Fetching requests for user:', session.user.id);
-      const data = await getJoinRequests(null, session.user.id, { user_id: session.user.id });
+      const data = await getJoinRequests(session.user.id, { 
+        user_id: session.user.id 
+      });
       console.log('Raw response from getJoinRequests:', data);
       
       if (!data) {
@@ -57,6 +66,24 @@ export default function ActiveGameJoinRequests() {
       
       setRequests(data);
       console.log('Requests set to:', data.length, 'items');
+      
+      // Fetch game details for each request
+      const gameIds = [...new Set(data.map(req => req.game_request_id))];
+      const gameDetailsMap: {[key: number]: GameRequest} = {};
+      
+      for (const gameId of gameIds) {
+        try {
+          // Use the new game_id parameter for direct lookup
+          const gameData = await getGameRequests({ game_id: gameId });
+          if (gameData && gameData.length > 0) {
+            gameDetailsMap[gameId] = gameData[0];
+          }
+        } catch (error) {
+          console.error(`Error fetching details for game ${gameId}:`, error);
+        }
+      }
+      
+      setGameDetails(gameDetailsMap);
     } catch (error) {
       console.error('Error in loadRequests:', error);
       Alert.alert('Error', 'Failed to load requests');
@@ -82,7 +109,7 @@ export default function ActiveGameJoinRequests() {
       case 'Rejected':
         return styles.rejectedBox;
       default:
-        return styles.grayBox;
+        return styles.pendingBox;
     }
   };
 
@@ -93,7 +120,18 @@ export default function ActiveGameJoinRequests() {
       case 'Rejected':
         return styles.rejectedText;
       default:
-        return styles.boxText;
+        return styles.pendingText;
+    }
+  };
+  
+  const getStatusMessage = (status: string) => {
+    switch (status) {
+      case 'Accepted':
+        return 'Your request has been accepted! You can now join this game.';
+      case 'Rejected':
+        return 'Your request was declined by the host.';
+      default:
+        return 'Your request is pending approval from the host.';
     }
   };
 
@@ -124,28 +162,25 @@ export default function ActiveGameJoinRequests() {
     );
   };
 
-  console.log('Current requests:', {
-    count: requests.length,
-    requests: requests,
-    sessionUserId: session?.user?.id,
-    loading,
-    refreshing
-  });
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: 'numeric' 
+    });
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <CustomText style={styles.title}>Join Requests</CustomText>
+        <CustomText style={styles.title}>My Join Requests</CustomText>
         <TouchableOpacity 
           style={styles.refreshButton}
           onPress={() => {
             console.log('Refresh button pressed');
-            console.log('Current state:', {
-              loading,
-              refreshing,
-              requestCount: requests.length,
-              sessionId: session?.user?.id
-            });
             handleRefresh();
           }}
           disabled={refreshing}
@@ -162,33 +197,52 @@ export default function ActiveGameJoinRequests() {
         {loading ? (
           <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
         ) : requests.length === 0 ? (
-          <View style={styles.grayBox}>
-            <CustomText style={styles.boxText}>No active join requests</CustomText>
+          <View style={styles.emptyBox}>
+            <CustomText style={styles.emptyText}>You haven't requested to join any games yet</CustomText>
           </View>
         ) : (
-          requests.map((request) => (
-            <View 
-              key={request.id} 
-              style={[styles.grayBox, getStatusStyle(request.status)]}
-            >
-              <CustomText style={styles.boxText}>Game ID: {request.game_request_id}</CustomText>
-              <CustomText style={[styles.boxText, getStatusTextStyle(request.status)]}>
-                Status: {request.status}
-              </CustomText>
-              <CustomText style={styles.boxText}>
-                Requested: {new Date(request.requested_at).toLocaleDateString()}
-              </CustomText>
-              
-              {request.status === 'Rejected' && (
-                <TouchableOpacity 
-                  style={styles.deleteButton}
-                  onPress={() => confirmDelete(request.id)}
-                >
-                  <CustomText style={styles.deleteButtonText}>Delete Request</CustomText>
-                </TouchableOpacity>
-              )}
-            </View>
-          ))
+          <>
+            {requests.map((request) => {
+              const game = gameDetails[request.game_request_id];
+              return (
+                <View key={request.id} style={[styles.requestBox, getStatusStyle(request.status)]}>
+                  <View style={styles.requestHeader}>
+                    <CustomText style={styles.gameTitle}>
+                      {game?.description || `Game #${request.game_request_id}`}
+                    </CustomText>
+                    <CustomText style={[styles.statusBadge, getStatusTextStyle(request.status)]}>
+                      {request.status}
+                    </CustomText>
+                  </View>
+                  
+                  {game && (
+                    <CustomText style={styles.gameTime}>
+                      {formatDate(game.requested_time)}
+                    </CustomText>
+                  )}
+                  
+                  <CustomText style={styles.statusMessage}>
+                    {getStatusMessage(request.status)}
+                  </CustomText>
+                  
+                  <CustomText style={styles.requestDate}>
+                    Requested on {new Date(request.requested_at).toLocaleDateString()}
+                  </CustomText>
+                
+                  {(request.status === 'Rejected' || request.status === 'Pending') && (
+                    <TouchableOpacity 
+                      style={styles.deleteButton} 
+                      onPress={() => confirmDelete(request.id)}
+                    >
+                      <CustomText style={styles.deleteButtonText}>
+                        {request.status === 'Pending' ? 'Cancel Request' : 'Remove'}
+                      </CustomText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
+          </>
         )}
       </ScrollView>
     </View>
@@ -197,45 +251,55 @@ export default function ActiveGameJoinRequests() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 28,
+    paddingHorizontal: 16,
     flex: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#rgba(1, 61, 90, 1)',
+    color: '#013D5A',
   },
   refreshButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    paddingLeft: 4,
-    paddingTop: 4,
-    marginLeft: 8,
-    backgroundColor: '#rgba(1, 61, 90, .08)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(1, 61, 90, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   refreshButtonText: {
-    color: 'fff',
-    fontSize: 32,
+    fontSize: 20,
+    color: '#013D5A',
   },
   loader: {
     marginTop: 20,
   },
-  grayBox: {
+  emptyBox: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  requestBox: {
+    borderRadius: 8,
+    padding: 16,
     marginBottom: 12,
   },
-  boxText: {
-    fontSize: 12,
-    color: '#000',
-    marginBottom: 4,
-    fontWeight: '500',
+  pendingBox: {
+    backgroundColor: '#f5f5f5',
+    borderLeftWidth: 4,
+    borderLeftColor: '#666',
   },
   acceptedBox: {
     backgroundColor: '#e7f3e8',
@@ -247,24 +311,62 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#d32f2f',
   },
+  requestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  gameTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#013D5A',
+    flex: 1,
+  },
+  statusBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  pendingText: {
+    color: '#666',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+  },
   acceptedText: {
     color: '#2F622A',
-    fontWeight: '600',
+    backgroundColor: 'rgba(47, 98, 42, 0.1)',
   },
   rejectedText: {
     color: '#d32f2f',
-    fontWeight: '600',
+    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+  },
+  gameTime: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  statusMessage: {
+    fontSize: 14,
+    marginVertical: 8,
+  },
+  requestDate: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 12,
   },
   deleteButton: {
-    backgroundColor: '#d32f2f',
-    padding: 8,
-    borderRadius: 5,
-    marginTop: 8,
     alignSelf: 'flex-end',
+    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
   },
   deleteButtonText: {
-    color: '#fff',
-    fontSize: 14,
+    fontSize: 12,
+    color: '#d32f2f',
     fontWeight: '500',
   },
 });
