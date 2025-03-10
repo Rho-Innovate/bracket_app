@@ -12,6 +12,7 @@ import {
   Image
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import { Text as CustomText } from '../text';
 
 type EmailSignupProps = {
   visible: boolean;
@@ -57,18 +58,16 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
         {/* Back Button & Green Logo */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
-            <Text style={styles.backText}>←</Text>
+            <CustomText style={styles.backText}>←</CustomText>
           </TouchableOpacity>
           <Image source={require("../../assets/images/logo.png")} style={styles.logo} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.contentContainer}>
           
-          {/* Sign Up Title */}
-          <Text style={styles.title}>SIGN UP</Text>
-          <Text style={styles.subtitle}>To get started, create your account.</Text>
+          <CustomText style={styles.title}>Create an account</CustomText>
+          {/* <CustomText style={styles.subtitle}>To get started, create your account.</CustomText> */}
 
-          {/* Progress Bar */}
           <View style={styles.progressBarContainer}>
             <View style={styles.progressBar} />
           </View>
@@ -76,20 +75,20 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
           {/* Input Fields */}
           <TextInput 
             style={styles.input} 
-            placeholder="First Name" 
+            placeholder="Full Name" 
             value={fullName} 
             onChangeText={setFullName} 
             placeholderTextColor="#B0B0B0"
           />
 
           {/* Input Fields */}
-          <TextInput 
+          {/* <TextInput 
             style={styles.input} 
             placeholder="Last Name" 
             value={fullName} 
             onChangeText={setFullName} 
             placeholderTextColor="#B0B0B0"
-          />
+          /> */}
 
           <TextInput 
             style={styles.input} 
@@ -113,29 +112,29 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
 
           {/* Green Continue Button */}
           <TouchableOpacity style={styles.continueButton} onPress={handleSignUp}>
-            <Text style={styles.continueButtonText}>CONTINUE</Text>
+            <CustomText style={styles.continueButtonText}>Continue</CustomText>
           </TouchableOpacity>
 
-          {/* OR Divider */}
+          {/* OR Divider
           <View style={styles.orContainer}>
             <View style={styles.line} />
-            <Text style={styles.orText}>OR</Text>
+            <CustomText style={styles.orText}>OR</CustomText>
             <View style={styles.line} />
           </View>
 
           {/* Social Login Buttons */}
-          <View style={styles.socialButtonsContainer}>
+          {/* <View style={styles.socialButtonsContainer}>
             <TouchableOpacity style={styles.socialButton} />
             <TouchableOpacity style={styles.socialButton} />
             <TouchableOpacity style={styles.socialButton} />
-          </View>
+          </View> */}
 
           {/* Login Link */}
-          <Text style={styles.loginText}>
-            Already have an account? <Text style={styles.loginLink}>Log In</Text>
-          </Text>
+          {/* <CustomText style={styles.loginText}>
+            Already have an account? <CustomText style={styles.loginLink}>Log In</CustomText>
+          </CustomText> */}
 
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </Modal>
   );
@@ -145,38 +144,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    padding: 28,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginTop: 10,
+    paddingHorizontal: 28,
+    // marginTop: 10,
   },
   backButton: {
-    padding: 10,
     borderRadius: 8,
   },
   backText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2F622A',
+    color: '#rgba(39, 75, 13, 1)',
   },
   logo: {
     width: 40,
     height: 40,
     resizeMode: 'contain',
   },
-  scrollContainer: {
+  contentContainer: {
     flexGrow: 1,
-    padding: 16,
+    padding: 28,
     alignItems: 'center',
+    // justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-    color: '#2F622A',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#rgba(39, 75, 13, 1)',
+    marginBottom: 32,
   },
   subtitle: {
     fontSize: 14,
@@ -185,39 +184,40 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   progressBarContainer: {
-    width: '90%',
+    width: '100%',
     height: 4,
     backgroundColor: '#ccc',
     borderRadius: 2,
-    marginBottom: 30,
+    marginBottom: 60,
   },
   progressBar: {
     width: '50%', 
     height: '100%',
-    backgroundColor: '#2F622A',
+    backgroundColor: '#rgba(39, 75, 13, 1)',
     borderRadius: 2,
   },
   input: {
-    width: '90%',
-    padding: 14,
+    height: 50,
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 12,
-    marginBottom: 35, 
-    fontSize: 16,
-    backgroundColor: '#F9F9F9',
+    borderColor: "##rgba(0, 0, 0, .04)",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    width: '100%',
+    marginBottom: 12,
+    backgroundColor: '#rgba(0, 0, 0, .02)',
   },
   continueButton: {
-    backgroundColor: '#2F622A',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#rgba(39, 75, 13, 1)',
     alignItems: 'center',
-    width: '90%',
-    marginTop: 10,
+    borderRadius: 999,
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: 40,
+    height: 50,
   },
   continueButtonText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   orContainer: {
@@ -251,13 +251,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   loginText: {
-    fontSize: 14,
+    // position: 'absolute',
+    // bottom: 0,
+    fontSize: 12,
     color: '#777',
-    marginTop: 16,
+    marginTop: 40,
   },
   loginLink: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#2F622A',
+    color: '#rgba(39, 75, 13, 1)',
+  },
+  inputField: {
+    fontSize: 12,
+    textAlign: "left",
+    letterSpacing: -0.4, // Add letter spacing
+    fontFamily: 'Montserrat', // Add font family
   },
 });
