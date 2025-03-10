@@ -1,4 +1,4 @@
-import { createJoinRequest, getGameRequests } from '@/lib/supabase';
+import { createJoinRequest, fetchPublicProfile, getGameRequests } from '@/lib/supabase';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useRef, useState } from 'react';
@@ -20,9 +20,26 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 }
 
+// Add a new interface for events with host information
+interface EventWithHost {
+  id: number;
+  description: string;
+  requested_time: string;
+  sport_id: number;
+  current_players: number;
+  max_players: number;
+  creator_id: string;
+  has_requested?: boolean;
+  host?: {
+    first_name: string;
+    last_name: string;
+    avatar_url?: string;
+  };
+}
+
 function HomeScreen() {
 const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-const [events, setEvents] = useState<any[]>([]);
+const [events, setEvents] = useState<EventWithHost[]>([]);
 const [loading, setLoading] = useState(true);
 const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
 const [joining, setJoining] = useState<{ [key: number]: boolean }>({});
@@ -52,12 +69,33 @@ const fetchEvents = async () => {
     
     console.log(`Fetched ${fetchedEvents.length} events successfully`);
 
-    // Refresh player counts from the backend
-    setEvents(fetchedEvents.map(event => ({
-      ...event,
-      current_players: event.current_players // Ensure the latest count is stored
-    })));
-    
+    // Fetch host profiles for each event
+    const eventsWithHosts = await Promise.all(
+      fetchedEvents.map(async (event) => {
+        try {
+          // Fetch host profile
+          const hostProfile = await fetchPublicProfile(event.creator_id);
+          
+          return {
+            ...event,
+            current_players: event.current_players, // Ensure the latest count is stored
+            host: hostProfile ? {
+              first_name: hostProfile.first_name,
+              last_name: hostProfile.last_name,
+              avatar_url: hostProfile.avatar_url
+            } : undefined
+          };
+        } catch (error) {
+          console.error(`Error fetching host for event ${event.id}:`, error);
+          return {
+            ...event,
+            current_players: event.current_players
+          };
+        }
+      })
+    );
+
+    setEvents(eventsWithHosts);
     setLoading(false);
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -125,7 +163,7 @@ const handleJoinEvent = async (eventId: number) => {
   }
 };
 const filteredEvents = events.filter(event =>
-  event.description.toLowerCase().includes(searchQuery.toLowerCase())
+  event.description?.toLowerCase().includes(searchQuery.toLowerCase())
 );
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(100)).current;
@@ -261,14 +299,26 @@ const filteredEvents = events.filter(event =>
                       <Text style={styles.eventDate}>
                         {event.requested_time ? formatDate(event.requested_time) : 'Time TBD'}
                       </Text>
-                      <Text style={styles.hostName}>Player</Text>
+                      <Text style={styles.hostName}>
+                        {event.host 
+                          ? `Host: ${event.host.first_name} ${event.host.last_name.charAt(0)}.` 
+                          : 'Host: Unknown'}
+                      </Text>
                     </View>
 
                     <View style={styles.rightContainer}>
-                      <Image
-                        style={styles.profilePicture}
-                        source={require("../../assets/images/default-avatar.jpg")}
-                      />
+                      {event.host?.avatar_url ? (
+                        <Image
+                          style={styles.profilePicture}
+                          source={{ uri: event.host.avatar_url }}
+                        />
+                      ) : (
+                        <View style={styles.avatarPlaceholder}>
+                          <Text style={styles.avatarInitial}>
+                            {event.host?.first_name ? event.host.first_name.charAt(0) : '?'}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
 
@@ -284,6 +334,30 @@ const filteredEvents = events.filter(event =>
 
                 {expandedEvent === event.id && (
                   <View style={styles.expandedContent}>
+                    {/* Host Information */}
+                    <View style={styles.hostInfoContainer}>
+                      {event.host?.avatar_url ? (
+                        <Image
+                          style={styles.expandedProfilePicture}
+                          source={{ uri: event.host.avatar_url }}
+                        />
+                      ) : (
+                        <View style={styles.expandedAvatarPlaceholder}>
+                          <Text style={styles.expandedAvatarInitial}>
+                            {event.host?.first_name ? event.host.first_name.charAt(0) : '?'}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={styles.hostInfoText}>
+                        <Text style={styles.expandedHostName}>
+                          {event.host 
+                            ? `${event.host.first_name} ${event.host.last_name.charAt(0)}.` 
+                            : 'Unknown Host'}
+                        </Text>
+                        <Text style={styles.hostLabel}>Event Host</Text>
+                      </View>
+                    </View>
+                    
                     <TouchableOpacity
                       style={[
                         styles.joinButton,
@@ -292,13 +366,6 @@ const filteredEvents = events.filter(event =>
                       ]}
                       onPress={() => {
                         console.log('Join button pressed for event:', event.id);
-                        console.log('Event details:', {
-                          eventId: event.id,
-                          isJoining: joining[event.id],
-                          currentPlayers: event.current_players,
-                          maxPlayers: event.max_players,
-                          isDisabled: joining[event.id] || event.current_players >= event.max_players
-                        });
                         handleJoinEvent(event.id);
                       }}
                       disabled={joining[event.id] || event.current_players >= event.max_players}
@@ -573,10 +640,10 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   hostName: {
-    fontSize: 12,
+    fontSize: 14,
+    color: '#013D5A',
+    marginTop: 4,
     fontWeight: '500',
-    color: 'rgba(0, 0, 0, 0.48)',
-    marginBottom: 24,
   },
   eventContent: {
     flexDirection: 'row',
@@ -654,6 +721,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#E5E5E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarInitial: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#666',
+  },
+  hostInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  expandedProfilePicture: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+  },
+  expandedAvatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E5E5E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  expandedAvatarInitial: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#666',
+  },
+  hostInfoText: {
+    flex: 1,
+  },
+  expandedHostName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#013D5A',
+    marginBottom: 4,
+  },
+  hostLabel: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 
