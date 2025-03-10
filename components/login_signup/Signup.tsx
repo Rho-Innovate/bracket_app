@@ -9,8 +9,9 @@ import {
   Modal,
   SafeAreaView,
   Image,
-  Alert
+  Alert,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Dropdown } from "react-native-element-dropdown";
 import { signUpAndCreateProfile } from "@/lib/supabase";
 
@@ -31,30 +32,70 @@ export default function CombinedSignupProfile({ visible, onClose }: CombinedSign
 
   // Step 2: Profile creation details
   const [playerName, setPlayerName] = useState("");
-  const [birthdate, setBirthdate] = useState("");
+  const [birthdate, setBirthdate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [bio, setBio] = useState("");
-  const [age, setAge] = useState(18);
+  // We no longer rely on a static age state. We'll compute it from the birthdate.
   const [gender, setGender] = useState("other");
 
   const genderOptions = [
+    { label: "-", value: null},
     { label: "Male", value: "male" },
     { label: "Female", value: "female" },
     { label: "Other", value: "other" },
   ];
 
+  // Helper function to calculate age from a Date object
+  const calculateAge = (birthDate: Date) => {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Event handler for Step 1 "CONTINUE" button
+  const handleContinue = () => {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please fill in all the required fields");
+      return;
+    }
+    // Basic email format validation
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Error", "Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters long.");
+      return;
+    }
+    setStep(2);
+  };
+
+  // Event handler for Step 2 "CREATE ACCOUNT" button
   const handleCreateAccount = async () => {
+    if (!playerName.trim() || !birthdate || gender === null) {
+      Alert.alert("Error", "Please fill in all the required fields");
+      return;
+    }
+    const computedAge = calculateAge(birthdate);
+    if (computedAge < 18) {
+      Alert.alert("Error", "You must be at least 18 years old to create an account.");
+      return;
+    }
     try {
-      // Combine profile data from both steps.
       const profileData = {
         username: playerName,
         first_name: firstName,
         last_name: lastName,
-        age: age,
+        age: computedAge,
         gender: gender,
-        // Example fixed location. Replace or extend as needed.
+        // Example fixed location. Update as needed.
         location: { lat: 47.606209, lng: 122.332069 },
       };
-
       const data = await signUpAndCreateProfile(email, password, profileData);
       Alert.alert("Success", "Account created and logged in successfully!");
       onClose();
@@ -86,7 +127,6 @@ export default function CombinedSignupProfile({ visible, onClose }: CombinedSign
             <>
               <Text style={styles.title}>SIGN UP</Text>
               <Text style={styles.subtitle}>To get started, create your account.</Text>
-              {/* Progress Bar for Step 1 */}
               <View style={styles.progressBarContainer}>
                 <View style={[styles.progressBar, { width: "50%" }]} />
               </View>
@@ -122,7 +162,7 @@ export default function CombinedSignupProfile({ visible, onClose }: CombinedSign
                 autoCapitalize="none"
                 placeholderTextColor="#B0B0B0"
               />
-              <TouchableOpacity style={styles.continueButton} onPress={() => setStep(2)}>
+              <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
                 <Text style={styles.continueButtonText}>CONTINUE</Text>
               </TouchableOpacity>
             </>
@@ -131,7 +171,6 @@ export default function CombinedSignupProfile({ visible, onClose }: CombinedSign
             <>
               <Text style={styles.title}>PROFILE CREATION</Text>
               <Text style={styles.subtitle}>Your player profile is how others will get to know you!</Text>
-              {/* Progress Bar for Step 2 */}
               <View style={styles.progressBarContainer}>
                 <View style={[styles.progressBar, { width: "100%" }]} />
               </View>
@@ -164,13 +203,29 @@ export default function CombinedSignupProfile({ visible, onClose }: CombinedSign
                 value={playerName}
                 placeholderTextColor="#B0B0B0"
               />
-              <TextInput
+              {/* Birthdate Field Using Date Picker */}
+              <TouchableOpacity
                 style={styles.input}
-                placeholder="MM/DD/YYYY"
-                onChangeText={setBirthdate}
-                value={birthdate}
-                placeholderTextColor="#B0B0B0"
-              />
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={birthdate ? styles.selectedDateText : styles.placeholderText}>
+                  {birthdate ? birthdate.toLocaleDateString() : "Select Birthdate"}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={birthdate || new Date(2000, 0, 1)}
+                  mode="date"
+                  display="default"
+                  maximumDate={new Date()}
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    if (selectedDate) {
+                      setBirthdate(selectedDate);
+                    }
+                  }}
+                />
+              )}
               <TextInput
                 style={styles.bioInput}
                 multiline
@@ -238,6 +293,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#F9F9F9",
   },
+  placeholderText: { color: "#B0B0B0", fontSize: 16 },
+  selectedDateText: { fontSize: 16, color: "#000" },
   continueButton: {
     backgroundColor: "#2F622A",
     padding: 16,
