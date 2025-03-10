@@ -26,7 +26,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 const Nav = ({ session }: { session: Session }) => {
   return (
-    <Stack.Navigator initialRouteName="Account"
+    <Stack.Navigator initialRouteName="Home"
       screenOptions={{
         headerShown: false, // Hide headers for a clean UI
       }}

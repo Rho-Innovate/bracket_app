@@ -81,26 +81,29 @@ export const signUpAndCreateProfile = async (
     throw new Error('User was not created during sign-up.');
   }
 
-  // Step 2: Create a profile for the user
+  // Step 2: Update the existing profile instead of inserting a new one
   const { username, first_name, last_name, age, gender, location } = profileData;
 
-  const { error: profileError } = await supabase.from('profiles').insert({
-    id: user.id, // The user's UUID from Supabase Auth
-    username,
-    first_name,
-    last_name,
-    age,
-    gender,
-    location: `SRID=4326;POINT(${location.lng} ${location.lat})`, // Store as geometry
-  });
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({
+      username,
+      first_name,
+      last_name,
+      age,
+      gender,
+      location: `SRID=4326;POINT(${location.lng} ${location.lat})`, // Store as geometry
+    })
+    .eq('id', user.id); // Ensure we're updating the existing profile
 
   if (profileError) {
-    console.error('Error creating profile:', profileError.message);
+    console.error('Error updating profile:', profileError.message);
     throw profileError;
   }
 
   return { user, profile: { ...profileData, id: user.id } };
 };
+
 
 //POST
 /*
@@ -1132,7 +1135,7 @@ export const respondToFriendRequest = async (requestId: number, userId: string, 
 
 /**
  * Get all friends of a user (accepted requests in either direction)
- */
+ 
 export const getFriends = async (userId: string): Promise<UserProfile[]> => {
   try {
     // Get friends where user is the receiver
@@ -1183,6 +1186,7 @@ export const getFriends = async (userId: string): Promise<UserProfile[]> => {
     throw error;
   }
 };
+**/
 
 /**
  * Remove a friend (set status to 'removed' for the friendship)
