@@ -488,11 +488,10 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   modalHeaderSeparator: {
-    borderBottomWidth: 4,
-    borderBottomColor: 'rgb(229, 229, 229)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(1, 1, 1, .02)',
     marginBottom: 32,
   },
-
   closeButtonText: {
     fontSize: 40,
     color: '#666',
