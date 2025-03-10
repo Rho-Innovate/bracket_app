@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { supabase } from "../../lib/supabase";
 import EmailSignup from './Signup';
+import { Text as CustomText } from '../text';
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -67,47 +68,47 @@ export default function Auth() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-          <Image
-            source={require("../../assets/images/logo.png")} // Replace with your logo path
-            style={styles.logo}
+      <Image
+        source={require("../../assets/images/logo.png")} // Replace with your logo path
+        style={styles.logo}
+      />
+      {/* <Text style={styles.title}>Sign in</Text> */}
+      <View style={styles.inputContainer}>
+        <View style={styles.fieldsContainer}>
+          <Input
+            labelStyle={styles.inputLabel}
+            inputStyle={styles.inputField}
+            inputContainerStyle={styles.roundedInputContainer}
+            onChangeText={setEmail}
+            value={email}
+            placeholder="Email"
+            autoCapitalize={"none"}
           />
-          <Text style={styles.title}>Sign in</Text>
-          <View style={styles.inputContainer}>
-  <View style={styles.fieldsContainer}>
-    <Input
-      labelStyle={styles.inputLabel}
-      inputStyle={styles.inputField}
-      inputContainerStyle={styles.roundedInputContainer}
-      onChangeText={setEmail}
-      value={email}
-      placeholder="Email"
-      autoCapitalize={"none"}
-    />
-    <Input
-      labelStyle={styles.inputLabel}
-      inputStyle={styles.inputField}
-      inputContainerStyle={styles.roundedInputContainer}
-      onChangeText={(text) => setPassword(text)}
-      value={password}
-      secureTextEntry={true}
-      placeholder="Password"
-      autoCapitalize={"none"}
-    />
-  </View>
-  <Button
-    title="Log in"
-    buttonStyle={styles.loginButton}
-    titleStyle={styles.loginButtonText}
-    disabled={loading}
-    onPress={signInWithEmail}
-  />
-</View>
-   <TouchableOpacity onPress={openSignUpModal} style={styles.signUpContainer}>
-            <Text style={styles.signupText}>
-              Don’t have an account? <Text style={styles.signupLink}>Sign up!</Text>
-            </Text>
-          </TouchableOpacity>
-      </KeyboardAvoidingView>
+          <Input
+            labelStyle={styles.inputLabel}
+            inputStyle={styles.inputField}
+            inputContainerStyle={styles.roundedInputContainer}
+            onChangeText={(text) => setPassword(text)}
+            value={password}
+            secureTextEntry={true}
+            placeholder="Password"
+            autoCapitalize={"none"}
+          />
+        </View>
+        <Button
+          title="Log in"
+          buttonStyle={styles.loginButton}
+          titleStyle={styles.loginButtonText}
+          disabled={loading}
+          onPress={signInWithEmail}
+        />
+      </View>
+      <TouchableOpacity onPress={openSignUpModal} style={styles.signUpContainer}>
+        <CustomText style={styles.signupText}>
+          <CustomText style={styles.signupLink}>Create an account</CustomText>
+        </CustomText>
+      </TouchableOpacity>
+        </KeyboardAvoidingView>
 
       {/* Sign-Up Modal */}
       {showSignUpModal && (
@@ -120,9 +121,9 @@ export default function Auth() {
               ]}
             >
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Sign up</Text>
+                <CustomText style={styles.modalTitle}>Sign up</CustomText>
                 <TouchableOpacity onPress={closeSignUpModal}>
-                  <Text style={styles.closeButton}>✕</Text>
+                  <CustomText style={styles.closeButton}>✕</CustomText>
                 </TouchableOpacity>
               </View>
               <Button
@@ -149,9 +150,9 @@ export default function Auth() {
                   closeSignUpModal();
                 }}
               />
-              <Text style={styles.termsText}>
+              <CustomText style={styles.termsText}>
                 Terms & Conditions and Privacy Policy apply.
-              </Text>
+              </CustomText>
             </Animated.View>
           </View>
         </Modal>
@@ -175,11 +176,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: 28,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 20,
+    width: 80,
+    height: 80,
+    marginBottom: 60,
     alignSelf: "center",
   },
   title: {
@@ -189,47 +191,59 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   inputContainer: {
-    width: "100%",
-    marginBottom: 20,
-    padding: 10,
     alignItems: "center",
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 12,
     color: "#000",
     textAlign: "left",
   },
   inputField: {
-    fontSize: 16,
+    fontSize: 12,
     textAlign: "left",
+    letterSpacing: -0.4, // Add letter spacing
+    fontFamily: 'Montserrat', // Add font family
+
   },
   inputContainerStyle: { //??
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: "#ccc",
   },
   loginButton: {
+    height: 50,
     backgroundColor: "#2F622A",
-    borderRadius: 10,
-    paddingVertical: 12,
-    width: "100%",
+    borderRadius: 999,
+    // paddingVertical: 12,
+    width: 360,
     alignSelf: "center",
   },
   loginButtonText: {
-    fontSize: 18,
+    fontSize: 12,
     fontWeight: "bold",
     color: "#fff",
+    letterSpacing: -0.4, // Add letter spacing
+    fontFamily: 'Montserrat', // Add font family
   },
   signUpContainer: {
-    alignSelf: "center",
-    marginTop: 20,
+    position: "absolute",
+    bottom: 0,
+    height: 50,
+    // backgroundColor: "#2F622A",
+    borderWidth: 2,
+    borderColor: "#2F622A",
+    borderRadius: 999,
+    width: 360,
+    alignItems: "center",
+    justifyContent: "center",
   },
   signupText: {
-    fontSize: 16,
-    color: "#000",
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#2F622A",
   },
   signupLink: {
     color: "#2F622A",
-    fontWeight: "600",
+    fontWeight: "700",
   },
   modalOverlay: {
     flex: 1,
@@ -266,9 +280,9 @@ const styles = StyleSheet.create({
   },
   modalSecondaryButton: {
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
+    // borderWidth: 1,
+    // borderColor: "#ccc",
+    // borderRadius: 8,
     paddingVertical: 12,
     marginBottom: 10,
   },
@@ -282,14 +296,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   roundedInputContainer: {
+    height: 50,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 8,
+    borderColor: "##rgba(0, 0, 0, .04)",
+    borderRadius: 8,
+    paddingHorizontal: 16,
     width: '100%',
+    marginBottom: -16,
+    backgroundColor: '#rgba(0, 0, 0, .02)',
   },
   fieldsContainer: {
-    width: '92%',
+    // width: '92%',
     alignItems: "center",
+    marginBottom: 40,
   },
 });
