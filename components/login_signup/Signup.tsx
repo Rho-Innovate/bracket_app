@@ -5,13 +5,11 @@ import {
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  Alert, 
   ScrollView,
   Modal,
   SafeAreaView,
   Image
 } from 'react-native';
-import { supabase } from '../../lib/supabase';
 import ProfileCreation from './ProfileCreation';
 
 type EmailSignupProps = {
@@ -23,42 +21,26 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
-  const[lastName, setLastName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [showProfileCreation, setShowProfileCreation] = useState(false);
 
-  const handleSignUp = async () => {
-    try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName
-          }
-        }
-      });
-
-      if (signUpError) throw signUpError;
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (signInError) throw signInError;
-
-      Alert.alert('Success', 'Account created and logged in successfully!');
-    } catch (error) {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
-    }
-  };
+  // If we're in the profile creation step, render that component.
+  if (showProfileCreation) {
+    return (
+      <ProfileCreation 
+        email={email}
+        password={password}
+        firstName={firstName}
+        lastName={lastName}
+        visible={visible}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <SafeAreaView style={styles.container}>
-        
-        {/* Back Button & Green Logo */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onClose}>
             <Text style={styles.backText}>←</Text>
@@ -67,8 +49,6 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          
-          {/* Sign Up Title */}
           <Text style={styles.title}>SIGN UP</Text>
           <Text style={styles.subtitle}>To get started, create your account.</Text>
 
@@ -77,7 +57,7 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
             <View style={styles.progressBar} />
           </View>
 
-          {/* Input Fields */}
+          {/* Basic info inputs */}
           <TextInput 
             style={styles.input} 
             placeholder="First Name" 
@@ -86,7 +66,6 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
             placeholderTextColor="#B0B0B0"
           />
 
-          {/* Input Fields */}
           <TextInput 
             style={styles.input} 
             placeholder="Last Name" 
@@ -115,22 +94,13 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
             placeholderTextColor="#B0B0B0"
           />
 
-          {/* Green Continue Button */}
-          <TouchableOpacity style={styles.continueButton} onPress={handleSignUp}>
+          {/* Instead of calling the sign-up function immediately, we transition to profile creation */}
+          <TouchableOpacity 
+            style={styles.continueButton} 
+            onPress={() => setShowProfileCreation(true)}
+          >
             <Text style={styles.continueButtonText}>CONTINUE</Text>
           </TouchableOpacity>
-          {showProfileCreation && (
-            <ProfileCreation 
-              email={email}
-              password={password}
-              firstName={firstName}
-              lastName={lastName}
-              visible={visible}
-              onClose={onClose}
-            />
-          )
-
-          }
 
           {/* OR Divider */}
           <View style={styles.orContainer}>
@@ -150,7 +120,6 @@ export default function Signup({ visible, onClose }: EmailSignupProps) {
           <Text style={styles.loginText}>
             Already have an account? <Text style={styles.loginLink}>Log In</Text>
           </Text>
-
         </ScrollView>
       </SafeAreaView>
     </Modal>
