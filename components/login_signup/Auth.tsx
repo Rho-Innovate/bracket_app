@@ -126,8 +126,10 @@ export default function Auth() {
                   <CustomText style={styles.closeButton}>✕</CustomText>
                 </TouchableOpacity>
               </View>
+              <View style={styles.modalHeaderSeparator} />
               <Button
                 title="Continue with email"
+                titleStyle={styles.modalPrimaryButtonText}
                 buttonStyle={styles.modalButton}
                 onPress={() => {
                   // First hide the sign up modal
@@ -203,7 +205,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
     letterSpacing: -0.4, // Add letter spacing
     fontFamily: 'Montserrat', // Add font family
-
   },
   inputContainerStyle: { //??
     borderBottomWidth: 0,
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     height: 50,
-    backgroundColor: "#2F622A",
+    backgroundColor: "#rgba(39, 75, 13, 1)",
     borderRadius: 999,
     // paddingVertical: 12,
     width: 360,
@@ -228,9 +229,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     height: 50,
-    // backgroundColor: "#2F622A",
+    // backgroundColor: "#rgba(39, 75, 13, 1)",
     borderWidth: 2,
-    borderColor: "#2F622A",
+    borderColor: "#rgba(39, 75, 13, 1)",
     borderRadius: 999,
     width: 360,
     alignItems: "center",
@@ -239,10 +240,10 @@ const styles = StyleSheet.create({
   signupText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#2F622A",
+    color: "#rgba(39, 75, 13, 1)",
   },
   signupLink: {
-    color: "#2F622A",
+    color: "#rgba(39, 75, 13, 1)",
     fontWeight: "700",
   },
   modalOverlay: {
@@ -254,29 +255,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 16,
     paddingBottom: 40,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 30,
-    paddingTop:  0,
+    // marginBottom: 30,
+    padding: 28,
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000',
   },
   closeButton: {
-    fontSize: 18,
-    color: "#666",
+    fontSize: 20,
+    color: '#666',
   },
   modalButton: {
-    backgroundColor: "#2F622A",
+    backgroundColor: "#rgba(39, 75, 13, 1)",
     borderRadius: 8,
-    paddingVertical: 12,
+    height: 50,
     marginBottom: 10,
+    width: 360,
+    alignSelf: "center",
   },
   modalSecondaryButton: {
     backgroundColor: "#fff",
@@ -286,8 +289,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 10,
   },
+  modalPrimaryButtonText: {
+    fontWeight: "500",
+    color: "#fff",
+    letterSpacing: -0.4, // Add letter spacing
+    fontFamily: 'Montserrat',
+    fontSize: 12,
+  },
   modalSecondaryButtonText: {
+    fontWeight: "500",
     color: "#000",
+    letterSpacing: -0.4, // Add letter spacing
+    fontFamily: 'Montserrat',
+    fontSize: 12,
   },
   termsText: {
     marginTop: 20,
@@ -309,5 +323,10 @@ const styles = StyleSheet.create({
     // width: '92%',
     alignItems: "center",
     marginBottom: 40,
+  },
+  modalHeaderSeparator: {
+    borderBottomWidth: 4,
+    borderBottomColor: 'rgb(229, 229, 229)',
+    marginBottom: 32,
   },
 });
