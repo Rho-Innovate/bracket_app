@@ -36,7 +36,7 @@ export default function CombinedSignupProfile({ visible, onClose }: CombinedSign
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [bio, setBio] = useState("");
   // We no longer rely on a static age state. We'll compute it from the birthdate.
-  const [gender, setGender] = useState("other");
+  const [gender, setGender] = useState(null);
 
   const genderOptions = [
     { label: "-", value: null},
