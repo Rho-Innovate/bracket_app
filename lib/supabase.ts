@@ -926,4 +926,289 @@ export const updateEloAfterMatch = async (
   }
 };
 
+// FRIENDS SYSTEM
+
+/**
+ * Search for users by username, first name, or last name
+ */
+export const searchUsers = async (searchQuery: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, first_name, last_name, avatar_url')
+      .or(`username.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%`)
+      .limit(20);
+
+    if (error) {
+      console.error('Error searching users:', error.message);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error searching users:', error);
+    throw error;
+  }
+};
+
+/**
+ * Send a friend request to another user
+ */
+export const sendFriendRequest = async (senderId: string, receiverId: string) => {
+  try {
+    // Check if a request already exists in either direction
+    const { data: existingRequests, error: checkError } = await supabase
+      .from('friend_requests')
+      .select('*')
+      .or(`and(sender_id.eq.${senderId},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${senderId})`)
+      .limit(1);
+
+    if (checkError) {
+      console.error('Error checking existing friend requests:', checkError.message);
+      throw checkError;
+    }
+
+    if (existingRequests && existingRequests.length > 0) {
+      // A request already exists
+      return { message: 'A friend request already exists between these users' };
+    }
+
+    // Create the friend request
+    const { data, error } = await supabase
+      .from('friend_requests')
+      .insert({
+        sender_id: senderId,
+        receiver_id: receiverId,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Error sending friend request:', error.message);
+      throw error;
+    }
+
+    return { message: 'Friend request sent successfully' };
+  } catch (error) {
+    console.error('Unexpected error sending friend request:', error);
+    throw error;
+  }
+};
+
+// Define interfaces for friend request responses
+interface UserProfile {
+  id: string;
+  username?: string;
+  first_name: string;
+  last_name: string;
+  avatar_url?: string;
+}
+
+interface ReceivedFriendRequest {
+  id: number;
+  status: string;
+  created_at: string;
+  sender_id: string;
+  profiles: UserProfile;
+}
+
+interface SentFriendRequest {
+  id: number;
+  status: string;
+  created_at: string;
+  receiver_id: string;
+  profiles: UserProfile;
+}
+
+/**
+ * Get all friend requests received by a user
+ */
+export const getReceivedFriendRequests = async (userId: string): Promise<ReceivedFriendRequest[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('friend_requests')
+      .select(`
+        id, 
+        status, 
+        created_at,
+        sender_id,
+        profiles!friend_requests_sender_id_fkey(id, username, first_name, last_name, avatar_url)
+      `)
+      .eq('receiver_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      console.error('Error fetching received friend requests:', error.message);
+      throw error;
+    }
+
+    // Transform the data to match the ReceivedFriendRequest interface
+    const transformedData = data.map(item => ({
+      ...item,
+      profiles: item.profiles as unknown as UserProfile
+    }));
+
+    return transformedData;
+  } catch (error) {
+    console.error('Unexpected error fetching received friend requests:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all friend requests sent by a user
+ */
+export const getSentFriendRequests = async (userId: string): Promise<SentFriendRequest[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('friend_requests')
+      .select(`
+        id, 
+        status, 
+        created_at,
+        receiver_id,
+        profiles!friend_requests_receiver_id_fkey(id, username, first_name, last_name, avatar_url)
+      `)
+      .eq('sender_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      console.error('Error fetching sent friend requests:', error.message);
+      throw error;
+    }
+
+    // Transform the data to match the SentFriendRequest interface
+    const transformedData = data.map(item => ({
+      ...item,
+      profiles: item.profiles as unknown as UserProfile
+    }));
+
+    return transformedData;
+  } catch (error) {
+    console.error('Unexpected error fetching sent friend requests:', error);
+    throw error;
+  }
+};
+
+/**
+ * Accept or reject a friend request
+ */
+export const respondToFriendRequest = async (requestId: number, userId: string, status: 'accepted' | 'rejected') => {
+  try {
+    // Verify the user is the receiver of this request
+    const { data: request, error: fetchError } = await supabase
+      .from('friend_requests')
+      .select('*')
+      .eq('id', requestId)
+      .eq('receiver_id', userId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching friend request:', fetchError.message);
+      throw fetchError;
+    }
+
+    if (!request) {
+      throw new Error('Friend request not found or you are not authorized to respond to it');
+    }
+
+    // Update the request status
+    const { error: updateError } = await supabase
+      .from('friend_requests')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', requestId);
+
+    if (updateError) {
+      console.error('Error updating friend request:', updateError.message);
+      throw updateError;
+    }
+
+    return { message: `Friend request ${status}` };
+  } catch (error) {
+    console.error('Unexpected error responding to friend request:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all friends of a user (accepted requests in either direction)
+ */
+export const getFriends = async (userId: string): Promise<UserProfile[]> => {
+  try {
+    // Get friends where user is the receiver
+    const { data: receivedFriends, error: receivedError } = await supabase
+      .from('friend_requests')
+      .select(`
+        sender_id,
+        profiles!friend_requests_sender_id_fkey(id, username, first_name, last_name, avatar_url)
+      `)
+      .eq('receiver_id', userId)
+      .eq('status', 'accepted');
+
+    if (receivedError) {
+      console.error('Error fetching received friends:', receivedError.message);
+      throw receivedError;
+    }
+
+    // Get friends where user is the sender
+    const { data: sentFriends, error: sentError } = await supabase
+      .from('friend_requests')
+      .select(`
+        receiver_id,
+        profiles!friend_requests_receiver_id_fkey(id, username, first_name, last_name, avatar_url)
+      `)
+      .eq('sender_id', userId)
+      .eq('status', 'accepted');
+
+    if (sentError) {
+      console.error('Error fetching sent friends:', sentError.message);
+      throw sentError;
+    }
+
+    // Combine and format the results
+    const friends = [
+      ...receivedFriends.map(item => ({
+        id: item.sender_id,
+        ...(item.profiles as unknown as UserProfile)
+      })),
+      ...sentFriends.map(item => ({
+        id: item.receiver_id,
+        ...(item.profiles as unknown as UserProfile)
+      }))
+    ];
+
+    return friends;
+  } catch (error) {
+    console.error('Unexpected error fetching friends:', error);
+    throw error;
+  }
+};
+
+/**
+ * Remove a friend (set status to 'removed' for the friendship)
+ */
+export const removeFriend = async (userId: string, friendId: string) => {
+  try {
+    // Update any existing friendship in either direction
+    const { error } = await supabase
+      .from('friend_requests')
+      .update({ 
+        status: 'removed',
+        updated_at: new Date().toISOString()
+      })
+      .or(`and(sender_id.eq.${userId},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${userId})`)
+      .eq('status', 'accepted');
+
+    if (error) {
+      console.error('Error removing friend:', error.message);
+      throw error;
+    }
+
+    return { message: 'Friend removed successfully' };
+  } catch (error) {
+    console.error('Unexpected error removing friend:', error);
+    throw error;
+  }
+};
+
 
