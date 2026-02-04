@@ -1,15 +1,15 @@
-import { Session } from '@supabase/supabase-js';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+  Avatar,
+  Button,
+  Divider,
+  IconButton,
+  Searchbar,
+  SegmentedButtons,
+  Surface,
+  Text,
+} from 'react-native-paper';
 import {
   getFriends,
   getReceivedFriendRequests,
@@ -18,11 +18,13 @@ import {
   respondToFriendRequest,
   searchUsers,
   sendFriendRequest,
-  supabase
 } from '../../lib/supabase';
-import { Text } from '../text';
+import { useAuth } from '@/contexts/AuthContext';
+import { AppTheme } from '../../constants/theme';
+import Header from '../common/Header';
+import LoadingState from '../common/LoadingState';
+import EmptyState from '../common/EmptyState';
 
-// Interface for user profiles
 interface UserProfile {
   id: string;
   username?: string;
@@ -31,7 +33,6 @@ interface UserProfile {
   avatar_url?: string;
 }
 
-// Interface for friend requests received
 interface ReceivedFriendRequest {
   id: number;
   status: string;
@@ -40,7 +41,6 @@ interface ReceivedFriendRequest {
   profiles: UserProfile;
 }
 
-// Interface for friend requests sent
 interface SentFriendRequest {
   id: number;
   status: string;
@@ -50,9 +50,8 @@ interface SentFriendRequest {
 }
 
 export default function FriendsScreen() {
-  // State variables
-  const [session, setSession] = useState<Session | null>(null);
-  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'search'>('friends');
+  const { session } = useAuth();
+  const [activeTab, setActiveTab] = useState('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [friends, setFriends] = useState<UserProfile[]>([]);
@@ -61,455 +60,307 @@ export default function FriendsScreen() {
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Get the current session
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Load friends and requests when session changes
   useEffect(() => {
     if (session?.user?.id) {
       loadFriends();
       loadFriendRequests();
     }
-  }, [session]);
+  }, [session?.user?.id]);
 
-  // Load friends
   const loadFriends = async () => {
     if (!session?.user?.id) return;
-    
     setLoading(true);
     try {
       const data = await getFriends(session.user.id);
       setFriends(data);
     } catch (error) {
       console.error('Error loading friends:', error);
-      Alert.alert('Error', 'Failed to load friends');
     } finally {
       setLoading(false);
     }
   };
 
-  // Load friend requests
   const loadFriendRequests = async () => {
     if (!session?.user?.id) return;
-    
     setLoading(true);
     try {
       const received = await getReceivedFriendRequests(session.user.id);
       const sent = await getSentFriendRequests(session.user.id);
-      
       setReceivedRequests(received);
       setSentRequests(sent);
     } catch (error) {
       console.error('Error loading friend requests:', error);
-      Alert.alert('Error', 'Failed to load friend requests');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle search
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
     setSearchLoading(true);
     try {
       const results = await searchUsers(searchQuery);
-      
-      // Filter out the current user
       const filteredResults = results.filter(user => user.id !== session?.user?.id);
-      
       setSearchResults(filteredResults);
     } catch (error) {
       console.error('Error searching users:', error);
-      Alert.alert('Error', 'Failed to search users');
     } finally {
       setSearchLoading(false);
     }
   };
 
-  // Send a friend request
   const handleSendRequest = async (userId: string) => {
-    if (!session?.user?.id) {
-      Alert.alert('Error', 'You must be logged in to send friend requests');
-      return;
-    }
-    
+    if (!session?.user?.id) return;
     try {
       await sendFriendRequest(session.user.id, userId);
       Alert.alert('Success', 'Friend request sent');
-      
-      // Refresh the search results to update UI
       handleSearch();
-      
-      // Refresh sent requests
       loadFriendRequests();
     } catch (error) {
-      console.error('Error sending friend request:', error);
       Alert.alert('Error', 'Failed to send friend request');
     }
   };
 
-  // Accept a friend request
   const handleAcceptRequest = async (requestId: number) => {
     if (!session?.user?.id) return;
-    
     try {
       await respondToFriendRequest(requestId, session.user.id, 'accepted');
-      
-      // Refresh friends and requests
       loadFriends();
       loadFriendRequests();
-      
-      Alert.alert('Success', 'Friend request accepted');
     } catch (error) {
-      console.error('Error accepting friend request:', error);
       Alert.alert('Error', 'Failed to accept friend request');
     }
   };
 
-  // Reject a friend request
   const handleRejectRequest = async (requestId: number) => {
     if (!session?.user?.id) return;
-    
     try {
       await respondToFriendRequest(requestId, session.user.id, 'rejected');
-      
-      // Refresh requests
       loadFriendRequests();
-      
-      Alert.alert('Success', 'Friend request rejected');
     } catch (error) {
-      console.error('Error rejecting friend request:', error);
       Alert.alert('Error', 'Failed to reject friend request');
     }
   };
 
-  // Remove a friend
   const handleRemoveFriend = async (friendId: string) => {
     if (!session?.user?.id) return;
-    
-    Alert.alert(
-      'Remove Friend',
-      'Are you sure you want to remove this friend?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await removeFriend(session.user.id, friendId);
-              
-              // Refresh friends list
-              loadFriends();
-              
-              Alert.alert('Success', 'Friend removed');
-            } catch (error) {
-              console.error('Error removing friend:', error);
-              Alert.alert('Error', 'Failed to remove friend');
-            }
+    Alert.alert('Remove Friend', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await removeFriend(session.user.id, friendId);
+            loadFriends();
+          } catch (error) {
+            Alert.alert('Error', 'Failed to remove friend');
           }
         }
-      ]
-    );
+      }
+    ]);
   };
 
-  // Render user item for search results
-  const renderSearchItem = ({ item }: { item: UserProfile }) => {
-    // Check if a request has already been sent to this user
-    const requestSent = sentRequests.some(request => 
-      request.profiles.id === item.id
-    );
-    
-    // Check if this user is already a friend
-    const isFriend = friends.some(friend => friend.id === item.id);
-    
-    // Check if this user has sent a request to the current user
-    const hasRequestedCurrentUser = receivedRequests.some(request => 
-      request.sender_id === item.id
-    );
+  // Performance optimization: Create lookup sets for O(1) checks instead of O(n) array searches
+  const sentRequestUserIds = useMemo(
+    () => new Set(sentRequests.map(req => req.profiles.id)),
+    [sentRequests]
+  );
+
+  const friendIds = useMemo(
+    () => new Set(friends.map(friend => friend.id)),
+    [friends]
+  );
+
+  const receivedRequestMap = useMemo(
+    () => new Map(receivedRequests.map(req => [req.sender_id, req])),
+    [receivedRequests]
+  );
+
+  const renderUserItem = useCallback((item: UserProfile, type: 'search' | 'friend') => {
+    // O(1) lookups using Sets/Maps instead of O(n) array.some()
+    const requestSent = sentRequestUserIds.has(item.id);
+    const isFriend = friendIds.has(item.id);
+    const receivedRequest = receivedRequestMap.get(item.id);
 
     return (
-      <View style={styles.userItem}>
-        {/* Avatar */}
+      <Surface style={styles.userItem} elevation={0}>
         {item.avatar_url ? (
-          <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
+          <Avatar.Image size={48} source={{ uri: item.avatar_url }} />
         ) : (
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarInitial}>
-              {item.first_name ? item.first_name.charAt(0).toUpperCase() : '?'}
-            </Text>
-          </View>
+          <Avatar.Text
+            size={48}
+            label={item.first_name?.charAt(0) || '?'}
+            style={{ backgroundColor: AppTheme.colors.surfaceVariant }}
+            labelStyle={{ color: AppTheme.colors.textSecondary }}
+          />
         )}
-        
-        {/* User info */}
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>
+          <Text variant="titleSmall" style={styles.userName}>
             {item.first_name} {item.last_name}
           </Text>
           {item.username && (
-            <Text style={styles.username}>@{item.username}</Text>
+            <Text variant="bodySmall" style={styles.username}>@{item.username}</Text>
           )}
         </View>
-        
-        {/* Action button */}
-        {isFriend ? (
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.friendButton]}
+
+        {type === 'friend' ? (
+          <Button
+            mode="outlined"
             onPress={() => handleRemoveFriend(item.id)}
+            textColor={AppTheme.colors.error}
+            style={styles.removeButton}
           >
-            <Text style={styles.friendButtonText}>Friends</Text>
-          </TouchableOpacity>
+            Remove
+          </Button>
+        ) : isFriend ? (
+          <Button mode="outlined" disabled style={styles.actionButton} textColor={AppTheme.colors.primary}>
+            Friends
+          </Button>
         ) : requestSent ? (
-          <TouchableOpacity style={[styles.actionButton, styles.pendingButton]} disabled>
-            <Text style={styles.pendingButtonText}>Pending</Text>
-          </TouchableOpacity>
-        ) : hasRequestedCurrentUser ? (
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.acceptButton]}
-            onPress={() => {
-              const request = receivedRequests.find(req => req.sender_id === item.id);
-              if (request) {
-                handleAcceptRequest(request.id);
-              }
-            }}
+          <Button mode="outlined" disabled style={styles.actionButton}>
+            Pending
+          </Button>
+        ) : receivedRequest ? (
+          <Button
+            mode="contained"
+            onPress={() => handleAcceptRequest(receivedRequest.id)}
+            buttonColor={AppTheme.colors.primary}
           >
-            <Text style={styles.acceptButtonText}>Accept</Text>
-          </TouchableOpacity>
+            Accept
+          </Button>
         ) : (
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.addButton]}
+          <Button
+            mode="contained"
             onPress={() => handleSendRequest(item.id)}
+            buttonColor={AppTheme.colors.primary}
           >
-            <Text style={styles.addButtonText}>Add</Text>
-          </TouchableOpacity>
+            Add
+          </Button>
         )}
-      </View>
+      </Surface>
     );
-  };
+  }, [sentRequestUserIds, friendIds, receivedRequestMap, handleRemoveFriend, handleAcceptRequest, handleSendRequest]);
 
-  // Render friend item
-  const renderFriendItem = ({ item }: { item: UserProfile }) => (
-    <View style={styles.userItem}>
-      {/* Avatar */}
-      {item.avatar_url ? (
-        <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
-      ) : (
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarInitial}>
-            {item.first_name ? item.first_name.charAt(0).toUpperCase() : '?'}
-          </Text>
-        </View>
-      )}
-      
-      {/* User info */}
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>
-          {item.first_name} {item.last_name}
-        </Text>
-        {item.username && (
-          <Text style={styles.username}>@{item.username}</Text>
-        )}
-      </View>
-      
-      {/* Remove button */}
-      <TouchableOpacity 
-        style={[styles.actionButton, styles.removeButton]}
-        onPress={() => handleRemoveFriend(item.id)}
-      >
-        <Text style={styles.removeButtonText}>Remove</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  // Render friend request item
-  const renderRequestItem = ({ item }: { item: ReceivedFriendRequest }) => (
-    <View style={styles.userItem}>
-      {/* Avatar */}
+  const renderRequestItem = (item: ReceivedFriendRequest) => (
+    <Surface style={styles.userItem} elevation={0}>
       {item.profiles.avatar_url ? (
-        <Image source={{ uri: item.profiles.avatar_url }} style={styles.avatar} />
+        <Avatar.Image size={48} source={{ uri: item.profiles.avatar_url }} />
       ) : (
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarInitial}>
-            {item.profiles.first_name ? item.profiles.first_name.charAt(0).toUpperCase() : '?'}
-          </Text>
-        </View>
+        <Avatar.Text
+          size={48}
+          label={item.profiles.first_name?.charAt(0) || '?'}
+          style={{ backgroundColor: AppTheme.colors.surfaceVariant }}
+          labelStyle={{ color: AppTheme.colors.textSecondary }}
+        />
       )}
-      
-      {/* User info */}
       <View style={styles.userInfo}>
-        <Text style={styles.userName}>
+        <Text variant="titleSmall" style={styles.userName}>
           {item.profiles.first_name} {item.profiles.last_name}
         </Text>
         {item.profiles.username && (
-          <Text style={styles.username}>@{item.profiles.username}</Text>
+          <Text variant="bodySmall" style={styles.username}>@{item.profiles.username}</Text>
         )}
       </View>
-      
-      {/* Action buttons */}
       <View style={styles.requestButtons}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.rejectButton]}
+        <IconButton
+          icon="close"
+          iconColor={AppTheme.colors.error}
+          size={20}
           onPress={() => handleRejectRequest(item.id)}
-        >
-          <Text style={styles.rejectButtonText}>Decline</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.acceptButton]}
+        />
+        <IconButton
+          icon="check"
+          iconColor={AppTheme.colors.primary}
+          size={20}
           onPress={() => handleAcceptRequest(item.id)}
-        >
-          <Text style={styles.acceptButtonText}>Accept</Text>
-        </TouchableOpacity>
+          style={{ backgroundColor: `${AppTheme.colors.primary}15` }}
+        />
       </View>
-    </View>
+    </Surface>
   );
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Friends</Text>
-      </View>
-      
-      {/* Tab Navigation */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[
-            styles.tabButton, 
-            activeTab === 'friends' && styles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('friends')}
-        >
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === 'friends' && styles.activeTabButtonText
-          ]}>Friends</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.tabButton, 
-            activeTab === 'requests' && styles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('requests')}
-        >
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === 'requests' && styles.activeTabButtonText
-          ]}>
-            Requests
-            {receivedRequests.length > 0 && (
-              <Text style={styles.badgeText}> ({receivedRequests.length})</Text>
-            )}
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.tabButton, 
-            activeTab === 'search' && styles.activeTabButton
-          ]}
-          onPress={() => setActiveTab('search')}
-        >
-          <Text style={[
-            styles.tabButtonText,
-            activeTab === 'search' && styles.activeTabButtonText
-          ]}>Search</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Content based on active tab */}
-      {activeTab === 'search' ? (
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search for users..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity 
-              style={styles.searchButton}
-              onPress={handleSearch}
-              disabled={searchLoading}
-            >
-              {searchLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.searchButtonText}>Search</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-          
-          {searchResults.length > 0 ? (
-            <FlatList
-              data={searchResults}
-              renderItem={renderSearchItem}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-            />
-          ) : searchQuery && !searchLoading ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No users found</Text>
-            </View>
-          ) : null}
-        </View>
+      <Header title="Friends" showDivider={false} />
+
+      <SegmentedButtons
+        value={activeTab}
+        onValueChange={setActiveTab}
+        buttons={[
+          { value: 'friends', label: 'Friends' },
+          { value: 'requests', label: `Requests${receivedRequests.length > 0 ? ` (${receivedRequests.length})` : ''}` },
+          { value: 'search', label: 'Search' },
+        ]}
+        style={styles.segmentedButtons}
+      />
+
+      <Divider />
+
+      {activeTab === 'search' && (
+        <Searchbar
+          placeholder="Search for users..."
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          onSubmitEditing={handleSearch}
+          style={styles.searchbar}
+          loading={searchLoading}
+        />
+      )}
+
+      {loading ? (
+        <LoadingState message="Loading..." />
+      ) : activeTab === 'search' ? (
+        searchResults.length > 0 ? (
+          <FlatList
+            data={searchResults}
+            renderItem={({ item }) => renderUserItem(item, 'search')}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : searchQuery && !searchLoading ? (
+          <EmptyState
+            icon="search-outline"
+            title="No Users Found"
+            message="Try a different search term."
+          />
+        ) : (
+          <EmptyState
+            icon="search-outline"
+            title="Search for Friends"
+            message="Enter a name or username to find people."
+          />
+        )
       ) : activeTab === 'requests' ? (
-        <View style={styles.requestsContainer}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
-          ) : receivedRequests.length > 0 ? (
-            <FlatList
-              data={receivedRequests}
-              renderItem={renderRequestItem}
-              keyExtractor={(item) => item.id.toString()}
-              contentContainerStyle={styles.listContent}
-              ListHeaderComponent={
-                <Text style={styles.sectionTitle}>Friend Requests</Text>
-              }
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No pending friend requests</Text>
-            </View>
-          )}
-        </View>
+        receivedRequests.length > 0 ? (
+          <FlatList
+            data={receivedRequests}
+            renderItem={({ item }) => renderRequestItem(item)}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.listContent}
+          />
+        ) : (
+          <EmptyState
+            icon="mail-outline"
+            title="No Pending Requests"
+            message="Friend requests you receive will appear here."
+          />
+        )
+      ) : friends.length > 0 ? (
+        <FlatList
+          data={friends}
+          renderItem={({ item }) => renderUserItem(item, 'friend')}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+        />
       ) : (
-        <View style={styles.friendsContainer}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#2F622A" style={styles.loader} />
-          ) : friends.length > 0 ? (
-            <FlatList
-              data={friends}
-              renderItem={renderFriendItem}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>You don't have any friends yet</Text>
-              <TouchableOpacity 
-                style={styles.findFriendsButton}
-                onPress={() => setActiveTab('search')}
-              >
-                <Text style={styles.findFriendsButtonText}>Find Friends</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+        <EmptyState
+          icon="people-outline"
+          title="No Friends Yet"
+          message="Search for people to add as friends."
+          actionLabel="Find Friends"
+          onAction={() => setActiveTab('search')}
+        />
       )}
     </View>
   );
@@ -518,217 +369,50 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: AppTheme.colors.background,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+  segmentedButtons: {
+    marginHorizontal: AppTheme.spacing.md,
+    marginBottom: AppTheme.spacing.sm,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#013D5A',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    marginBottom: 16,
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  activeTabButton: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#2F622A',
-  },
-  tabButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-  },
-  activeTabButtonText: {
-    color: '#2F622A',
-    fontWeight: '600',
-  },
-  badgeText: {
-    color: '#2F622A',
-    fontWeight: '700',
-  },
-  searchContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    marginRight: 8,
-    fontSize: 16,
-  },
-  searchButton: {
-    backgroundColor: '#2F622A',
-    height: 48,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  requestsContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  friendsContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
+  searchbar: {
+    marginHorizontal: AppTheme.spacing.md,
+    marginVertical: AppTheme.spacing.sm,
+    elevation: 0,
+    backgroundColor: AppTheme.colors.surfaceVariant,
+    borderRadius: AppTheme.borderRadius.md,
   },
   listContent: {
-    paddingBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#013D5A',
-    marginBottom: 12,
+    padding: AppTheme.spacing.md,
   },
   userItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
-  },
-  avatarPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarInitial: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#666',
+    paddingVertical: AppTheme.spacing.sm,
+    paddingHorizontal: AppTheme.spacing.sm,
+    marginBottom: AppTheme.spacing.sm,
+    borderRadius: AppTheme.borderRadius.md,
+    backgroundColor: AppTheme.colors.surface,
   },
   userInfo: {
     flex: 1,
+    marginLeft: AppTheme.spacing.sm,
   },
   userName: {
-    fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    color: AppTheme.colors.text,
   },
   username: {
-    fontSize: 14,
-    color: '#666',
+    color: AppTheme.colors.textSecondary,
   },
   actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButton: {
-    backgroundColor: '#2F622A',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  pendingButton: {
-    backgroundColor: '#f0f0f0',
-  },
-  pendingButtonText: {
-    color: '#666',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  friendButton: {
-    backgroundColor: '#e7f3e8',
-  },
-  friendButtonText: {
-    color: '#2F622A',
-    fontWeight: '600',
-    fontSize: 14,
+    borderRadius: AppTheme.borderRadius.full,
   },
   removeButton: {
-    backgroundColor: 'rgba(211, 47, 47, 0.1)',
-  },
-  removeButtonText: {
-    color: '#d32f2f',
-    fontWeight: '600',
-    fontSize: 14,
+    borderColor: AppTheme.colors.error,
+    borderRadius: AppTheme.borderRadius.full,
   },
   requestButtons: {
     flexDirection: 'row',
-  },
-  acceptButton: {
-    backgroundColor: '#2F622A',
-    marginLeft: 8,
-  },
-  acceptButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  rejectButton: {
-    backgroundColor: 'rgba(211, 47, 47, 0.1)',
-  },
-  rejectButtonText: {
-    color: '#d32f2f',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 50,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  findFriendsButton: {
-    backgroundColor: '#2F622A',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  findFriendsButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  loader: {
-    marginTop: 20,
   },
 });

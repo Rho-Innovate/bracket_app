@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__ide__getDiagnostics",
+      "Bash(npx expo install:*)",
+      "Bash(supabase --version:*)",
+      "Bash(supabase db --help:*)",
+      "Bash(supabase migration repair:*)",
+      "Bash(supabase db push:*)",
+      "Bash(supabase migration:*)",
+      "Bash(wc:*)",
+      "Bash(npx supabase functions deploy:*)",
+      "Bash(grep:*)",
+      "Bash(supabase projects list:*)",
+      "Bash(supabase db execute:*)",
+      "Bash(supabase --help:*)",
+      "Bash(supabase db remote list:*)",
+      "Bash(supabase inspect:*)"
+    ]
+  },
+  "outputStyle": "Learning"
+}

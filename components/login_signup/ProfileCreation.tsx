@@ -11,7 +11,6 @@ import {
   ScrollView,
   Alert
 } from "react-native";
-import { Button } from "@rneui/themed";
 import { Dropdown } from 'react-native-element-dropdown';
 import { signUpAndCreateProfile } from "@/lib/supabase";
 

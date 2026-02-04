@@ -26,11 +26,16 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
         throw error
       }
 
-      const fr = new FileReader()
-      fr.readAsDataURL(data)
-      fr.onload = () => {
-        setAvatarUrl(fr.result as string)
+      // Convert blob to base64 using arrayBuffer (Expo-compatible, no FileReader)
+      const arrayBuffer = await data.arrayBuffer()
+      const bytes = new Uint8Array(arrayBuffer)
+      let binary = ''
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i])
       }
+      const base64 = btoa(binary)
+      const mimeType = data.type || 'image/jpeg'
+      setAvatarUrl(`data:${mimeType};base64,${base64}`)
     } catch (error) {
       if (error instanceof Error) {
         console.log('Error downloading image: ', error.message)
@@ -43,7 +48,7 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
       setUploading(true)
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Restrict to only images
+        mediaTypes: ['images'], // Restrict to only images
         allowsMultipleSelection: false, // Can only select one image
         allowsEditing: true, // Allows the user to crop / rotate their photo before uploading it
         quality: 1,

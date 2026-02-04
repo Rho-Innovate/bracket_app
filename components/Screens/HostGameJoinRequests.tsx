@@ -1,4 +1,3 @@
-import { Session } from '@supabase/supabase-js';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -10,7 +9,10 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { fetchPublicProfile, getGameRequests, getJoinRequests, updateJoinRequestStatus, updatePlayerCount } from '../../lib/supabase';
+import { fetchPublicProfilesBatch, getGameRequests, getJoinRequests, acceptJoinRequest, rejectJoinRequest } from '../../lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import UserProfileModal from '../common/UserProfileModal';
+import { showError, showSuccess } from '@/utils/errorHandler';
 
 // Example interface for JoinRequest
 interface JoinRequest {
@@ -32,25 +34,31 @@ interface UserProfile {
   id: string;
   first_name: string;
   last_name: string;
+  username?: string;
   avatar_url?: string;
 }
 
-export default function HostGameJoinRequests({ session }: { session: Session }) {
-  const hostUserId = session.user.id;
+export default function HostGameJoinRequests() {
+  const { session } = useAuth();
+  const hostUserId = session?.user?.id;
 
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [games, setGames] = useState<{[key: number]: GameRequest}>({});
   const [userProfiles, setUserProfiles] = useState<{[key: string]: UserProfile}>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Load join requests for the host's games
   const loadRequests = async () => {
+    if (!hostUserId) return;
+
     try {
       setLoading(true);
       const gameRequests = await getGameRequests({ creator_id: hostUserId });
       const gameRequestIds = gameRequests.map((g) => g.id);
-      
+
       // Create a map of games for easy lookup
       const gamesMap: {[key: number]: GameRequest} = {};
       gameRequests.forEach(game => {
@@ -58,31 +66,25 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
       });
       setGames(gamesMap);
 
-      const data = await getJoinRequests(hostUserId, { 
-        game_request_ids: gameRequestIds, 
-        status: 'Pending' 
+      const data = await getJoinRequests(hostUserId, {
+        game_request_ids: gameRequestIds,
+        status: 'Pending'
       });
       setRequests(data);
-      
-      // Fetch user profiles for each request
+
+      // Fetch user profiles in batch (single query instead of N queries)
       const userIds = [...new Set(data.map(req => req.user_id))];
-      const profilesMap: {[key: string]: UserProfile} = {};
-      
-      for (const userId of userIds) {
-        try {
-          const profile = await fetchPublicProfile(userId);
-          if (profile) {
-            profilesMap[userId] = profile;
-          }
-        } catch (error) {
-          console.error(`Error fetching profile for user ${userId}:`, error);
-        }
-      }
-      
-      setUserProfiles(profilesMap);
+      const profilesMap = await fetchPublicProfilesBatch(userIds);
+
+      // Convert Map to object for compatibility
+      const profilesObj: {[key: string]: UserProfile} = {};
+      profilesMap.forEach((profile, id) => {
+        profilesObj[id] = profile;
+      });
+
+      setUserProfiles(profilesObj);
     } catch (error) {
-      console.error('Error:', error);
-      Alert.alert('Error', 'Failed to load host join requests');
+      showError(error, 'Failed to Load Requests');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -99,31 +101,39 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
     loadRequests();
   };
 
-  // Accept join request and update player count
-  const handleAccept = async (requestId: number, gameId: number) => {
+  // Accept join request using transaction-safe RPC function
+  const handleAccept = async (requestId: number) => {
+    if (!hostUserId) return;
+
     try {
-      await updateJoinRequestStatus(requestId, session.user.id, "Accepted");
+      const result = await acceptJoinRequest(requestId, hostUserId);
 
-      // Increase player count
-      await updatePlayerCount(gameId, 1);
-
-      Alert.alert('Accepted', 'You have accepted this request.');
-      loadRequests(); // Refresh requests
+      if (result.success) {
+        showSuccess('Request accepted!');
+        loadRequests(); // Refresh requests
+      } else {
+        Alert.alert('Cannot Accept', result.message);
+      }
     } catch (error) {
-      console.error('Error accepting request:', error);
-      Alert.alert('Error', 'Failed to accept request');
+      showError(error, 'Failed to Accept Request');
     }
   };
 
-  // Reject join request
+  // Reject join request using transaction-safe RPC function
   const handleReject = async (requestId: number) => {
+    if (!hostUserId) return;
+
     try {
-      await updateJoinRequestStatus(requestId, session.user.id, "Rejected");
-      Alert.alert('Rejected', 'You have rejected this request.');
-      loadRequests();
+      const result = await rejectJoinRequest(requestId, hostUserId);
+
+      if (result.success) {
+        showSuccess('Request declined');
+        loadRequests();
+      } else {
+        Alert.alert('Cannot Reject', result.message);
+      }
     } catch (error) {
-      console.error('Error rejecting request:', error);
-      Alert.alert('Error', 'Failed to reject request');
+      showError(error, 'Failed to Reject Request');
     }
   };
 
@@ -222,9 +232,20 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
                   )}
                   
                   <View style={styles.playerDetails}>
-                    <Text style={styles.playerName}>
-                      {profile ? `${profile.first_name} ${profile.last_name}` : 'Unknown Player'}
-                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedUserId(request.user_id);
+                        setShowProfileModal(true);
+                      }}
+                    >
+                      <Text style={styles.playerNameClickable}>
+                        {profile
+                          ? profile.username
+                            ? `@${profile.username}`
+                            : `${profile.first_name} ${profile.last_name}`
+                          : 'Unknown Player'}
+                      </Text>
+                    </TouchableOpacity>
                     <Text style={styles.requestTime}>
                       Requested {new Date(request.requested_at).toLocaleDateString()}
                     </Text>
@@ -241,9 +262,9 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
                       <Text style={styles.rejectButtonText}>Decline</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
-                      style={styles.acceptButton} 
-                      onPress={() => handleAccept(request.id, request.game_request_id)}
+                    <TouchableOpacity
+                      style={styles.acceptButton}
+                      onPress={() => handleAccept(request.id)}
                     >
                       <Text style={styles.acceptButtonText}>Accept</Text>
                     </TouchableOpacity>
@@ -254,6 +275,15 @@ export default function HostGameJoinRequests({ session }: { session: Session }) 
           })
         )}
       </ScrollView>
+
+      <UserProfileModal
+        visible={showProfileModal}
+        userId={selectedUserId}
+        onClose={() => {
+          setShowProfileModal(false);
+          setSelectedUserId(null);
+        }}
+      />
     </View>
   );
 }
@@ -371,6 +401,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     marginBottom: 4,
+  },
+  playerNameClickable: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#2F622A',
+    marginBottom: 4,
+    textDecorationLine: 'underline',
   },
   requestTime: {
     fontSize: 12,
