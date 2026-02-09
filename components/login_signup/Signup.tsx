@@ -1,19 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
   Modal,
-  SafeAreaView,
   Image,
   Alert,
+  Platform,
 } from "react-native";
+import {
+  TextInput,
+  Button,
+  Text,
+  IconButton,
+  HelperText,
+  ProgressBar,
+  Avatar,
+  SegmentedButtons,
+} from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Dropdown } from "react-native-element-dropdown";
+import * as Location from "expo-location";
 import { signUpAndCreateProfile } from "@/lib/supabase";
+import EmailVerificationScreen from "./EmailVerificationScreen";
+import { AppTheme } from "../../constants/theme";
+
+const theme = {
+  colors: {
+    primary: AppTheme.colors.primary,
+  },
+};
 
 type CombinedSignupProfileProps = {
   visible: boolean;
@@ -21,31 +36,54 @@ type CombinedSignupProfileProps = {
 };
 
 export default function CombinedSignupProfile({ visible, onClose }: CombinedSignupProfileProps) {
-  // Step state: 1 for basic sign-up info, 2 for profile creation details.
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [showVerificationScreen, setShowVerificationScreen] = useState(false);
 
   // Step 1: Basic info
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+
+  // Errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Step 2: Profile creation details
   const [playerName, setPlayerName] = useState("");
   const [birthdate, setBirthdate] = useState<Date | null>(null);
+  const [tempDate, setTempDate] = useState<Date>(new Date(2000, 0, 1));
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [bio, setBio] = useState("");
-  // We no longer rely on a static age state. We'll compute it from the birthdate.
-  const [gender, setGender] = useState(null);
+  const [gender, setGender] = useState<string>("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
-  const genderOptions = [
-    { label: "-", value: null},
-    { label: "Male", value: "male" },
-    { label: "Female", value: "female" },
-    { label: "Other", value: "other" },
-  ];
+  // Request location permission and get coordinates
+  useEffect(() => {
+    const requestLocationPermission = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Location permission denied, using default');
+          return;
+        }
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        setUserLocation({
+          lat: location.coords.latitude,
+          lng: location.coords.longitude,
+        });
+      } catch (error) {
+        console.log('Error getting location:', error);
+      }
+    };
 
-  // Helper function to calculate age from a Date object
+    if (visible) {
+      requestLocationPermission();
+    }
+  }, [visible]);
+
   const calculateAge = (birthDate: Date) => {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -56,312 +94,457 @@ export default function CombinedSignupProfile({ visible, onClose }: CombinedSign
     return age;
   };
 
-  // Event handler for Step 1 "CONTINUE" button
-  const handleContinue = () => {
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      Alert.alert("Error", "Please fill in all the required fields");
-      return;
+  const validateStep1 = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!firstName.trim()) newErrors.firstName = "First name is required";
+    if (!lastName.trim()) newErrors.lastName = "Last name is required";
+
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email";
     }
-    // Basic email format validation
-    const emailRegex = /\S+@\S+\.\S+/;
-    if (!emailRegex.test(email)) {
-      Alert.alert("Error", "Please enter a valid email address.");
-      return;
+
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long.");
-      return;
-    }
-    setStep(2);
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  // Event handler for Step 2 "CREATE ACCOUNT" button
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!playerName.trim()) newErrors.playerName = "Username is required";
+    if (!birthdate) newErrors.birthdate = "Birthdate is required";
+    if (!gender) newErrors.gender = "Please select your gender";
+
+    if (birthdate && calculateAge(birthdate) < 18) {
+      newErrors.birthdate = "You must be at least 18 years old";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleContinue = () => {
+    if (validateStep1()) {
+      setStep(2);
+    }
+  };
+
+
   const handleCreateAccount = async () => {
-    if (!playerName.trim() || !birthdate || gender === null) {
-      Alert.alert("Error", "Please fill in all the required fields");
-      return;
-    }
-    const computedAge = calculateAge(birthdate);
-    if (computedAge < 18) {
-      Alert.alert("Error", "You must be at least 18 years old to create an account.");
-      return;
-    }
+    if (!validateStep2()) return;
+
+    setLoading(true);
     try {
+      const computedAge = calculateAge(birthdate!);
+      // Use actual location if available, otherwise use a default (Seattle)
+      const location = userLocation || { lat: 47.606209, lng: -122.332069 };
       const profileData = {
         username: playerName,
         first_name: firstName,
         last_name: lastName,
         age: computedAge,
         gender: gender,
-        // Example fixed location. Update as needed.
-        location: { lat: 47.606209, lng: 122.332069 },
+        location,
       };
-      const data = await signUpAndCreateProfile(email, password, profileData);
-      Alert.alert("Success", "Account created and logged in successfully!");
-      onClose();
-    } catch (error) {
-      Alert.alert("Error", "There was an issue creating your account. Please try again.");
+      const { user } = await signUpAndCreateProfile(email, password, profileData);
+
+      // Note: Avatar upload is deferred until after email verification
+      // Users can add a profile photo from their profile screen after signing in
+      // This is because storage RLS requires a fully authenticated session
+
+      // Show verification screen instead of closing
+      setShowVerificationScreen(true);
+    } catch (error: any) {
+      const errorMessage = error.message?.toLowerCase() || "";
+      if (errorMessage.includes("already registered") || errorMessage.includes("already exists")) {
+        Alert.alert("Error", "An account with this email already exists.");
+      } else {
+        Alert.alert("Error", error.message || "There was an issue creating your account.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleBack = () => {
+    if (step === 1) {
+      onClose();
+    } else {
+      setStep(1);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowVerificationScreen(false);
+    onClose();
+  };
+
+  // Show verification screen after successful signup
+  if (showVerificationScreen) {
+    return (
+      <Modal visible={visible} animationType="slide">
+        <EmailVerificationScreen
+          email={email}
+          onBackToLogin={handleBackToLogin}
+        />
+      </Modal>
+    );
+  }
+
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
-      <SafeAreaView style={styles.container}>
+    <Modal visible={visible} animationType="slide">
+      <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => {
-              if (step === 1) {
-                onClose();
-              } else {
-                setStep(1);
-              }
-            }}
-          >
-            <Text style={styles.backText}>←</Text>
-          </TouchableOpacity>
+          <IconButton
+            icon="arrow-left"
+            size={24}
+            onPress={handleBack}
+            iconColor={theme.colors.primary}
+          />
           <Image source={require("../../assets/images/logo.png")} style={styles.logo} />
+          <View style={{ width: 40 }} />
         </View>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {step === 1 && (
+
+        <ProgressBar
+          progress={step === 1 ? 0.5 : 1}
+          color={theme.colors.primary}
+          style={styles.progressBar}
+        />
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          {step === 1 ? (
             <>
-              <Text style={styles.title}>SIGN UP</Text>
-              <Text style={styles.subtitle}>To get started, create your account.</Text>
-              <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBar, { width: "50%" }]} />
+              <Text variant="headlineMedium" style={styles.title}>
+                Create Account
+              </Text>
+              <Text variant="bodyMedium" style={styles.subtitle}>
+                Enter your details to get started
+              </Text>
+
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <TextInput
+                    label="First Name"
+                    value={firstName}
+                    onChangeText={(t) => { setFirstName(t); if (errors.firstName) setErrors({...errors, firstName: ""}); }}
+                    mode="outlined"
+                    error={!!errors.firstName}
+                    style={styles.input}
+                    outlineColor="#ccc"
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                  <HelperText type="error" visible={!!errors.firstName}>
+                    {errors.firstName}
+                  </HelperText>
+                </View>
+                <View style={styles.halfInput}>
+                  <TextInput
+                    label="Last Name"
+                    value={lastName}
+                    onChangeText={(t) => { setLastName(t); if (errors.lastName) setErrors({...errors, lastName: ""}); }}
+                    mode="outlined"
+                    error={!!errors.lastName}
+                    style={styles.input}
+                    outlineColor="#ccc"
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                  <HelperText type="error" visible={!!errors.lastName}>
+                    {errors.lastName}
+                  </HelperText>
+                </View>
               </View>
+
               <TextInput
-                style={styles.input}
-                placeholder="First Name"
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholderTextColor="#B0B0B0"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Last Name"
-                value={lastName}
-                onChangeText={setLastName}
-                placeholderTextColor="#B0B0B0"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
+                label="Email"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(t) => { setEmail(t); if (errors.email) setErrors({...errors, email: ""}); }}
+                mode="outlined"
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor="#B0B0B0"
-              />
-              <TextInput
+                error={!!errors.email}
                 style={styles.input}
-                placeholder="Password"
+                outlineColor="#ccc"
+                activeOutlineColor={theme.colors.primary}
+                left={<TextInput.Icon icon="email-outline" />}
+              />
+              <HelperText type="error" visible={!!errors.email}>
+                {errors.email}
+              </HelperText>
+
+              <TextInput
+                label="Password"
                 value={password}
-                onChangeText={setPassword}
-                secureTextEntry
+                onChangeText={(t) => { setPassword(t); if (errors.password) setErrors({...errors, password: ""}); }}
+                mode="outlined"
+                secureTextEntry={secureTextEntry}
                 autoCapitalize="none"
-                placeholderTextColor="#B0B0B0"
-              />
-              <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-                <Text style={styles.continueButtonText}>CONTINUE</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <Text style={styles.title}>PROFILE CREATION</Text>
-              <Text style={styles.subtitle}>Your player profile is how others will get to know you!</Text>
-              <View style={styles.progressBarContainer}>
-                <View style={[styles.progressBar, { width: "100%" }]} />
-              </View>
-              <View style={styles.profileImageContainer}>
-                <Image
-                  source={require("../../assets/images/default_pfp.png")}
-                  style={styles.profileImage}
-                />
-                <TouchableOpacity style={styles.editIcon}>
-                  <Text style={styles.editIconText}>+</Text>
-                </TouchableOpacity>
-              </View>
-              <Dropdown
-                style={styles.dropdown}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                iconStyle={styles.iconStyle}
-                data={genderOptions}
-                maxHeight={300}
-                labelField="label"
-                valueField="value"
-                placeholder="Select gender"
-                value={gender}
-                onChange={(item) => setGender(item.value)}
-              />
-              <TextInput
+                error={!!errors.password}
                 style={styles.input}
-                placeholder="Username"
-                onChangeText={setPlayerName}
-                value={playerName}
-                placeholderTextColor="#B0B0B0"
+                outlineColor="#ccc"
+                activeOutlineColor={theme.colors.primary}
+                left={<TextInput.Icon icon="lock-outline" />}
+                right={
+                  <TextInput.Icon
+                    icon={secureTextEntry ? "eye-off" : "eye"}
+                    onPress={() => setSecureTextEntry(!secureTextEntry)}
+                  />
+                }
               />
-              {/* Birthdate Field Using Date Picker */}
-              <TouchableOpacity
-                style={styles.input}
-                onPress={() => setShowDatePicker(true)}
+              <HelperText type="error" visible={!!errors.password}>
+                {errors.password}
+              </HelperText>
+
+              <Button
+                mode="contained"
+                onPress={handleContinue}
+                style={styles.button}
+                contentStyle={styles.buttonContent}
+                buttonColor={theme.colors.primary}
               >
-                <Text style={birthdate ? styles.selectedDateText : styles.placeholderText}>
-                  {birthdate ? birthdate.toLocaleDateString() : "Select Birthdate"}
+                Continue
+              </Button>
+            </>
+          ) : (
+            <>
+              <Text variant="headlineMedium" style={styles.title}>
+                Profile Setup
+              </Text>
+              <Text variant="bodyMedium" style={styles.subtitle}>
+                Tell us a bit about yourself
+              </Text>
+
+              <View style={styles.avatarContainer}>
+                <Avatar.Image
+                  size={100}
+                  source={require("../../assets/images/default_pfp.png")}
+                />
+                <Text variant="bodySmall" style={styles.avatarHint}>
+                  You can add a photo later
                 </Text>
-              </TouchableOpacity>
-              {showDatePicker && (
+              </View>
+
+              <TextInput
+                label="Username"
+                value={playerName}
+                onChangeText={(t) => { setPlayerName(t); if (errors.playerName) setErrors({...errors, playerName: ""}); }}
+                mode="outlined"
+                autoCapitalize="none"
+                autoCorrect={false}
+                error={!!errors.playerName}
+                style={styles.input}
+                outlineColor="#ccc"
+                activeOutlineColor={theme.colors.primary}
+                left={<TextInput.Icon icon="account-outline" />}
+              />
+              <HelperText type="error" visible={!!errors.playerName}>
+                {errors.playerName}
+              </HelperText>
+
+              <Text variant="labelLarge" style={styles.label}>Gender</Text>
+              <SegmentedButtons
+                value={gender}
+                onValueChange={(value) => { setGender(value); if (errors.gender) setErrors({...errors, gender: ""}); }}
+                buttons={[
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' },
+                ]}
+                style={styles.segmentedButtons}
+              />
+              <HelperText type="error" visible={!!errors.gender}>
+                {errors.gender}
+              </HelperText>
+
+              <Button
+                mode="outlined"
+                onPress={() => setShowDatePicker(true)}
+                style={styles.dateButton}
+                contentStyle={styles.dateButtonContent}
+                icon="calendar"
+                textColor={birthdate ? "#000" : "#666"}
+              >
+                {birthdate ? birthdate.toLocaleDateString() : "Select Birthdate"}
+              </Button>
+              <HelperText type="error" visible={!!errors.birthdate}>
+                {errors.birthdate}
+              </HelperText>
+
+              {showDatePicker && Platform.OS === 'ios' && (
+                <View style={styles.datePickerInline}>
+                  <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="spinner"
+                    maximumDate={new Date()}
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        setTempDate(selectedDate);
+                      }
+                    }}
+                    style={styles.datePicker}
+                  />
+                  <View style={styles.datePickerButtons}>
+                    <Button
+                      mode="text"
+                      onPress={() => setShowDatePicker(false)}
+                      textColor="#666"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      mode="contained"
+                      onPress={() => {
+                        setBirthdate(tempDate);
+                        setShowDatePicker(false);
+                        if (errors.birthdate) setErrors({...errors, birthdate: ""});
+                      }}
+                      buttonColor={theme.colors.primary}
+                    >
+                      Confirm
+                    </Button>
+                  </View>
+                </View>
+              )}
+
+              {showDatePicker && Platform.OS === 'android' && (
                 <DateTimePicker
-                  value={birthdate || new Date(2000, 0, 1)}
+                  value={tempDate}
                   mode="date"
                   display="default"
                   maximumDate={new Date()}
                   onChange={(event, selectedDate) => {
                     setShowDatePicker(false);
-                    if (selectedDate) {
+                    if (event.type === 'set' && selectedDate) {
                       setBirthdate(selectedDate);
+                      if (errors.birthdate) setErrors({...errors, birthdate: ""});
                     }
                   }}
                 />
               )}
-              <TextInput
-                style={styles.bioInput}
-                multiline
-                numberOfLines={4}
-                placeholder="Write something about yourself..."
-                onChangeText={setBio}
-                value={bio}
-                placeholderTextColor="#B0B0B0"
-              />
-              <TouchableOpacity style={styles.createButton} onPress={handleCreateAccount}>
-                <Text style={styles.createButtonText}>CREATE ACCOUNT</Text>
-              </TouchableOpacity>
+
+              <Button
+                mode="contained"
+                onPress={handleCreateAccount}
+                loading={loading}
+                disabled={loading}
+                style={styles.button}
+                contentStyle={styles.buttonContent}
+                buttonColor={theme.colors.primary}
+              >
+                {loading ? "Creating Account..." : "Create Account"}
+              </Button>
             </>
           )}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === 'ios' ? 50 : 0,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginTop: 10,
+    alignItems: "center",
+    paddingHorizontal: 8,
   },
-  backButton: { padding: 10, borderRadius: 8 },
-  backText: { fontSize: 24, fontWeight: "bold", color: "#2F622A" },
-  logo: { width: 40, height: 40, resizeMode: "contain" },
-  scrollContainer: { flexGrow: 1, padding: 16, alignItems: "center" },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
-    color: "#2F622A",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#777",
-    textAlign: "center",
-    marginBottom: 30,
-  },
-  progressBarContainer: {
-    width: "90%",
-    height: 4,
-    backgroundColor: "#ccc",
-    borderRadius: 2,
-    marginBottom: 30,
+  logo: {
+    width: 40,
+    height: 40,
+    resizeMode: "contain",
   },
   progressBar: {
-    height: "100%",
-    backgroundColor: "#2F622A",
+    marginHorizontal: 24,
+    marginTop: 8,
+    height: 4,
     borderRadius: 2,
   },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 24,
+  },
+  title: {
+    textAlign: "center",
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  subtitle: {
+    textAlign: "center",
+    color: "#666",
+    marginBottom: 24,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  halfInput: {
+    flex: 1,
+  },
   input: {
-    width: "90%",
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 12,
-    marginBottom: 35,
-    fontSize: 16,
-    backgroundColor: "#F9F9F9",
+    backgroundColor: "#fff",
   },
-  placeholderText: { color: "#B0B0B0", fontSize: 16 },
-  selectedDateText: { fontSize: 16, color: "#000" },
-  continueButton: {
-    backgroundColor: "#2F622A",
+  label: {
+    marginBottom: 8,
+    color: "#333",
+  },
+  segmentedButtons: {
+    marginBottom: 4,
+  },
+  dateButton: {
+    borderColor: "#ccc",
+    borderRadius: 4,
+  },
+  dateButtonContent: {
+    paddingVertical: 8,
+    justifyContent: "flex-start",
+  },
+  datePickerInline: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 12,
+    marginTop: 8,
+  },
+  datePicker: {
+    height: 150,
+  },
+  datePickerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 12,
+  },
+  button: {
+    marginTop: 24,
+    borderRadius: 8,
+  },
+  buttonContent: {
+    paddingVertical: 8,
+  },
+  avatarContainer: {
+    alignSelf: "center",
     alignItems: "center",
-    width: "90%",
-    marginTop: 10,
+    marginBottom: 24,
   },
-  continueButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+  avatarHint: {
+    marginTop: 8,
+    color: "#888",
   },
-  profileImageContainer: {
-    marginBottom: 30,
-    alignItems: "center",
-    position: "relative",
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 50,
-    backgroundColor: "#ccc",
-  },
-  editIcon: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    backgroundColor: "#2F622A",
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  editIconText: { color: "white", fontSize: 16 },
-  dropdown: {
-    width: "90%",
-    height: 50,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    marginBottom: 35,
-    backgroundColor: "#F9F9F9",
-  },
-  placeholderStyle: { fontSize: 16, color: "#B0B0B0" },
-  selectedTextStyle: { fontSize: 16 },
-  iconStyle: { width: 20, height: 20 },
-  bioInput: {
-    width: "90%",
-    height: 80,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 12,
-    padding: 10,
-    backgroundColor: "#F9F9F9",
-    fontSize: 16,
-    marginBottom: 35,
-  },
-  createButton: {
-    backgroundColor: "#2F622A",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    width: "90%",
-    marginTop: 10,
-  },
-  createButtonText: { color: "white", fontSize: 18, fontWeight: "bold" },
 });

@@ -1,24 +1,55 @@
 {
-  "name": "bracket_app",
-  "version": "1.0.0",
-  "description": "A description of your app",
-  "main": "index.js",
-  "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
-  },
-  "dependencies": {
-    "@react-navigation/native": "^6.0.0",
-    "@supabase/supabase-js": "^1.0.0",
-    "expo-font": "^10.0.0",
-    "expo-splash-screen": "^0.10.0",
-    "react-native": "^0.64.0"
-  },
-  "devDependencies": {
-    "typescript": "^4.0.0"
-  },
-  "author": "Your Name",
-  "license": "MIT"
+  "expo": {
+    "name": "Bracket",
+    "slug": "bracket-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo.png",
+    "scheme": "bracket",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bracket.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.bracket.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bracket needs access to your photos so you can choose a profile picture.",
+          "cameraPermission": "Bracket needs access to your camera so you can take a profile picture."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
 }

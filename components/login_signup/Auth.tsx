@@ -1,231 +1,314 @@
-import { Button, Input } from "@rneui/themed";
 import React, { useState } from "react";
 import {
   Alert,
   StyleSheet,
   View,
-  Text,
-  TouchableOpacity,
   Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Modal,
-  Animated,
-  Easing,
+  TouchableWithoutFeedback,
 } from "react-native";
+import {
+  TextInput,
+  Button,
+  Text,
+  HelperText,
+  IconButton,
+} from "react-native-paper";
 import { supabase } from "../../lib/supabase";
 import Signup from './Signup';
+import { AppTheme } from '../../constants/theme';
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [modalAnimation] = useState(new Animated.Value(0));
   const [showEmailSignup, setShowEmailSignup] = useState(false);
- 
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    setEmailError("");
+    setPasswordError("");
+
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email");
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError("Password is required");
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      isValid = false;
+    }
+
+    return isValid;
+  };
 
   async function signInWithEmail() {
+    if (!validateForm()) return;
+
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim().toLowerCase(),
       password,
     });
 
-    if (error) Alert.alert(error.message);
+    if (error) {
+      Alert.alert("Sign In Error", error.message);
+    }
     setLoading(false);
   }
 
   const openSignUpModal = () => {
     setShowSignUpModal(true);
-    Animated.timing(modalAnimation, {
-      toValue: 1,
-      duration: 300, 
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
   };
 
   const closeSignUpModal = () => {
-    Animated.timing(modalAnimation, {
-      toValue: 0,
-      duration: 300, 
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => setShowSignUpModal(false));
+    setShowSignUpModal(false);
   };
 
-  const modalTranslateY = modalAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [400, 0], // Starts below screen and slides up
-  });
-
   return (
-    <View style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.logoContainer}>
           <Image
-            source={require("../../assets/images/logo.png")} // Replace with your logo path
+            source={require("../../assets/images/logo.png")}
             style={styles.logo}
           />
-          <Text style={styles.title}>Sign in</Text>
-          <View style={styles.inputContainer}>
-  <View style={styles.fieldsContainer}>
-    <Input
-      labelStyle={styles.inputLabel}
-      inputStyle={styles.inputField}
-      inputContainerStyle={styles.roundedInputContainer}
-      onChangeText={setEmail}
-      value={email}
-      placeholder="Email"
-      autoCapitalize={"none"}
-    />
-    <Input
-      labelStyle={styles.inputLabel}
-      inputStyle={styles.inputField}
-      inputContainerStyle={styles.roundedInputContainer}
-      onChangeText={(text) => setPassword(text)}
-      value={password}
-      secureTextEntry={true}
-      placeholder="Password"
-      autoCapitalize={"none"}
-    />
-  </View>
-  <Button
-    title="Log in"
-    buttonStyle={styles.loginButton}
-    titleStyle={styles.loginButtonText}
-    disabled={loading}
-    onPress={signInWithEmail}
-  />
-</View>
-   <TouchableOpacity onPress={openSignUpModal} style={styles.signUpContainer}>
-            <Text style={styles.signupText}>
-              Don’t have an account? <Text style={styles.signupLink}>Sign up!</Text>
+        </View>
+
+        <Text variant="headlineMedium" style={styles.title}>
+          Welcome Back
+        </Text>
+        <Text variant="bodyMedium" style={styles.subtitle}>
+          Sign in to continue
+        </Text>
+
+        <View style={styles.formContainer}>
+          <TextInput
+            label="Email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (emailError) setEmailError("");
+            }}
+            mode="outlined"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            error={!!emailError}
+            style={styles.input}
+            outlineColor="#ccc"
+            activeOutlineColor={AppTheme.colors.primary}
+            left={<TextInput.Icon icon="email-outline" />}
+          />
+          <HelperText type="error" visible={!!emailError}>
+            {emailError}
+          </HelperText>
+
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError("");
+            }}
+            mode="outlined"
+            secureTextEntry={secureTextEntry}
+            autoCapitalize="none"
+            error={!!passwordError}
+            style={styles.input}
+            outlineColor="#ccc"
+            activeOutlineColor={AppTheme.colors.primary}
+            left={<TextInput.Icon icon="lock-outline" />}
+            right={
+              <TextInput.Icon
+                icon={secureTextEntry ? "eye-off" : "eye"}
+                onPress={() => setSecureTextEntry(!secureTextEntry)}
+              />
+            }
+          />
+          <HelperText type="error" visible={!!passwordError}>
+            {passwordError}
+          </HelperText>
+
+          <Button
+            mode="contained"
+            onPress={signInWithEmail}
+            loading={loading}
+            disabled={loading}
+            style={styles.loginButton}
+            contentStyle={styles.loginButtonContent}
+            labelStyle={styles.loginButtonLabel}
+            buttonColor={AppTheme.colors.primary}
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </Button>
+
+          <View style={styles.signupContainer}>
+            <Text variant="bodyMedium" style={styles.signupText}>
+              Don't have an account?{" "}
             </Text>
-          </TouchableOpacity>
-      </KeyboardAvoidingView>
+            <Button
+              mode="text"
+              onPress={openSignUpModal}
+              labelStyle={styles.signupLink}
+              compact
+            >
+              Sign up
+            </Button>
+          </View>
+        </View>
+      </ScrollView>
 
       {/* Sign-Up Modal */}
-      {showSignUpModal && (
-        <Modal transparent animationType="none" visible={showSignUpModal}>
+      <Modal
+        visible={showSignUpModal}
+        transparent
+        animationType="fade"
+        onRequestClose={closeSignUpModal}
+      >
+        <TouchableWithoutFeedback onPress={closeSignUpModal}>
           <View style={styles.modalOverlay}>
-            <Animated.View
-              style={[
-                styles.modalContainer,
-                { transform: [{ translateY: modalTranslateY }] },
-              ]}
-            >
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Sign up</Text>
-                <TouchableOpacity onPress={closeSignUpModal}>
-                  <Text style={styles.closeButton}>✕</Text>
-                </TouchableOpacity>
-              </View>
-              <Button
-                title="Continue with email"
-                buttonStyle={styles.modalButton}
-                onPress={() => {
-                  // First hide the sign up modal
-                  Animated.timing(modalAnimation, {
-                    toValue: 0,
-                    duration: 300,
-                    easing: Easing.out(Easing.ease),
-                    useNativeDriver: true,
-                  }).start(() => {
-                    setShowSignUpModal(false);
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Text variant="headlineSmall" style={styles.modalTitle}>
+                    Create Account
+                  </Text>
+                  <IconButton
+                    icon="close"
+                    size={24}
+                    onPress={closeSignUpModal}
+                  />
+                </View>
+
+                <Text variant="bodyMedium" style={styles.modalSubtitle}>
+                  Choose how you'd like to sign up
+                </Text>
+
+                <Button
+                  mode="contained"
+                  onPress={() => {
+                    closeSignUpModal();
                     setShowEmailSignup(true);
-                  });
-                }}
-              />
-              <Button
-                title="Continue with phone"
-                buttonStyle={styles.modalSecondaryButton}
-                titleStyle={styles.modalSecondaryButtonText}
-                onPress={() => {
-                  closeSignUpModal();
-                }}
-              />
-              <Text style={styles.termsText}>
-                Terms & Conditions and Privacy Policy apply.
-              </Text>
-            </Animated.View>
+                  }}
+                  style={styles.modalButton}
+                  contentStyle={styles.modalButtonContent}
+                  buttonColor={AppTheme.colors.primary}
+                  icon="email-outline"
+                >
+                  Continue with Email
+                </Button>
+
+                <Button
+                  mode="outlined"
+                  onPress={closeSignUpModal}
+                  style={styles.modalSecondaryButton}
+                  contentStyle={styles.modalButtonContent}
+                  textColor="#333"
+                  icon="phone-outline"
+                >
+                  Continue with Phone
+                </Button>
+
+                <Text variant="bodySmall" style={styles.termsText}>
+                  By signing up, you agree to our Terms & Conditions and Privacy Policy.
+                </Text>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </Modal>
-      )}
+        </TouchableWithoutFeedback>
+      </Modal>
+
       {showEmailSignup && (
         <Signup
           visible={showEmailSignup}
           onClose={() => setShowEmailSignup(false)}
         />
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: "#fff",
   },
-  container: {
-    flex: 1,
-    alignItems: "center",
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
+    padding: 24,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 32,
   },
   logo: {
     width: 100,
     height: 100,
-    marginBottom: 20,
-    alignSelf: "center",
+    resizeMode: "contain",
   },
   title: {
-    fontSize: 28,
-    fontWeight: "600",
-    marginBottom: 40,
-    alignSelf: "center",
+    textAlign: "center",
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 8,
   },
-  inputContainer: {
+  subtitle: {
+    textAlign: "center",
+    color: "#666",
+    marginBottom: 32,
+  },
+  formContainer: {
     width: "100%",
-    marginBottom: 20,
-    padding: 10,
-    alignItems: "center",
   },
-  inputLabel: {
-    fontSize: 16,
-    color: "#000",
-    textAlign: "left",
-  },
-  inputField: {
-    fontSize: 16,
-    textAlign: "left",
-  },
-  inputContainerStyle: { //??
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+  input: {
+    backgroundColor: "#fff",
+    marginBottom: 4,
   },
   loginButton: {
-    backgroundColor: "#2F622A",
-    borderRadius: 10,
-    paddingVertical: 12,
-    width: "100%",
-    alignSelf: "center",
+    marginTop: 16,
+    borderRadius: 8,
   },
-  loginButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
+  loginButtonContent: {
+    paddingVertical: 8,
   },
-  signUpContainer: {
-    alignSelf: "center",
-    marginTop: 20,
+  loginButtonLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  signupContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
   },
   signupText: {
-    fontSize: 16,
-    color: "#000",
+    color: "#666",
   },
   signupLink: {
     color: "#2F622A",
@@ -233,63 +316,46 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContainer: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
-    paddingBottom: 40,
+    backgroundColor: "white",
+    margin: 20,
+    borderRadius: 16,
+    padding: 24,
+    width: "90%",
+    maxWidth: 400,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 30,
-    paddingTop:  0,
+    marginBottom: 8,
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontWeight: "700",
   },
-  closeButton: {
-    fontSize: 18,
+  modalSubtitle: {
     color: "#666",
+    marginBottom: 24,
   },
   modalButton: {
-    backgroundColor: "#2F622A",
+    marginBottom: 12,
     borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 10,
   },
   modalSecondaryButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
+    marginBottom: 12,
     borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 10,
+    borderColor: "#ccc",
   },
-  modalSecondaryButtonText: {
-    color: "#000",
+  modalButtonContent: {
+    paddingVertical: 8,
   },
   termsText: {
-    marginTop: 20,
-    fontSize: 12,
-    color: "#666",
     textAlign: "center",
-  },
-  roundedInputContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 8,
-    width: '100%',
-  },
-  fieldsContainer: {
-    width: '92%',
-    alignItems: "center",
+    color: "#999",
+    marginTop: 16,
   },
 });
